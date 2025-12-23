@@ -1,0 +1,315 @@
+"""
+Machine Learning Tools for CrewAI Agents
+Provides tools for model recommendation and simple model training.
+"""
+
+import json
+import os
+import pickle
+from typing import Any, Type
+
+import numpy as np
+import pandas as pd
+from crewai.tools import BaseTool
+from pydantic import BaseModel, Field
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.preprocessing import LabelEncoder
+
+from src.tools.data_tools import DataStore
+
+
+class ModelStore:
+    """Singleton to store the trained model and metadata."""
+    _instance = None
+    _model = None
+    _model_type: str = None
+    _target_column: str = None
+    _feature_columns: list = []
+    _label_encoders: dict = {}
+    _model_metadata: dict = {}
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+    
+    @classmethod
+    def set_model(cls, model, model_type: str, target: str, features: list, encoders: dict, metadata: dict):
+        cls._model = model
+        cls._model_type = model_type
+        cls._target_column = target
+        cls._feature_columns = features
+        cls._label_encoders = encoders
+        cls._model_metadata = metadata
+    
+    @classmethod
+    def get_model(cls):
+        return cls._model
+    
+    @classmethod
+    def get_metadata(cls) -> dict:
+        return {
+            "model_type": cls._model_type,
+            "target_column": cls._target_column,
+            "feature_columns": cls._feature_columns,
+            "metadata": cls._model_metadata
+        }
+    
+    @classmethod
+    def get_label_encoders(cls) -> dict:
+        return cls._label_encoders
+
+
+# ============ Suggest Models Tool ============
+
+class SuggestModelsInput(BaseModel):
+    """Input for model suggestion tool."""
+    target_column: str = Field(description="Name of the target variable to predict")
+
+
+class SuggestModelsBasedOnDataTool(BaseTool):
+    name: str = "suggest_models"
+    description: str = """
+    Analyze dataset characteristics and suggest suitable ML models.
+    Input: target_column - the column to predict
+    Returns: List of recommended algorithms with justifications.
+    """
+    args_schema: Type[BaseModel] = SuggestModelsInput
+    
+    def _run(self, target_column: str) -> str:
+        df = DataStore.get_dataframe()
+        if df is None:
+            return "Error: No dataset loaded"
+        
+        if target_column not in df.columns:
+            return f"Error: Target column '{target_column}' not found"
+        
+        # Analyze target variable
+        target = df[target_column]
+        n_unique = target.nunique()
+        n_samples = len(df)
+        n_features = len(df.columns) - 1
+        
+        recommendations = {
+            "target_analysis": {},
+            "data_characteristics": {},
+            "recommended_models": [],
+            "reasoning": []
+        }
+        
+        # Determine problem type
+        if pd.api.types.is_numeric_dtype(target) and n_unique > 10:
+            problem_type = "regression"
+            recommendations["target_analysis"] = {
+                "type": "continuous",
+                "problem": "regression",
+                "unique_values": int(n_unique),
+                "mean": float(target.mean()),
+                "std": float(target.std())
+            }
+        else:
+            problem_type = "classification"
+            class_distribution = target.value_counts().to_dict()
+            recommendations["target_analysis"] = {
+                "type": "categorical" if target.dtype == 'object' else "discrete",
+                "problem": "classification",
+                "n_classes": int(n_unique),
+                "class_distribution": {str(k): int(v) for k, v in class_distribution.items()},
+                "is_balanced": max(class_distribution.values()) / min(class_distribution.values()) < 3
+            }
+        
+        # Analyze data characteristics
+        numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        categorical_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
+        
+        recommendations["data_characteristics"] = {
+            "n_samples": n_samples,
+            "n_features": n_features,
+            "numeric_features": len(numeric_cols) - 1,  # Exclude target if numeric
+            "categorical_features": len(categorical_cols),
+            "missing_values": int(df.isnull().sum().sum()),
+            "sample_to_feature_ratio": round(n_samples / max(n_features, 1), 2)
+        }
+        
+        # Make recommendations
+        if problem_type == "classification":
+            recommendations["recommended_models"] = [
+                {
+                    "model": "Random Forest Classifier",
+                    "priority": 1,
+                    "reason": "Robust, handles mixed data types, interpretable feature importance"
+                },
+                {
+                    "model": "XGBoost Classifier",
+                    "priority": 2,
+                    "reason": "High performance, handles imbalanced data well"
+                },
+                {
+                    "model": "Logistic Regression",
+                    "priority": 3,
+                    "reason": "Simple baseline, highly interpretable coefficients"
+                }
+            ]
+            if n_unique == 2:
+                recommendations["reasoning"].append("Binary classification detected - all suggested models work well")
+            else:
+                recommendations["reasoning"].append(f"Multi-class classification ({n_unique} classes) - ensemble methods recommended")
+        else:
+            recommendations["recommended_models"] = [
+                {
+                    "model": "Random Forest Regressor",
+                    "priority": 1,
+                    "reason": "Robust, minimal tuning needed, feature importance available"
+                },
+                {
+                    "model": "XGBoost Regressor",
+                    "priority": 2,
+                    "reason": "High performance, handles non-linear relationships"
+                },
+                {
+                    "model": "Linear Regression",
+                    "priority": 3,
+                    "reason": "Simple baseline, interpretable coefficients"
+                }
+            ]
+            recommendations["reasoning"].append("Continuous target detected - tree-based ensembles recommended for robustness")
+        
+        # Add general recommendations
+        if n_samples < 1000:
+            recommendations["reasoning"].append("Small dataset - avoid deep learning, prefer simpler models")
+        if recommendations["data_characteristics"]["sample_to_feature_ratio"] < 10:
+            recommendations["reasoning"].append("Low sample-to-feature ratio - regularization recommended")
+        
+        # Store for later use
+        DataStore.set_metadata("model_recommendations", recommendations)
+        DataStore.set_metadata("target_column", target_column)
+        DataStore.set_metadata("problem_type", problem_type)
+        
+        return json.dumps(recommendations, indent=2)
+
+
+# ============ Train Simple Model Tool ============
+
+class TrainModelInput(BaseModel):
+    """Input for model training tool."""
+    target_column: str = Field(description="Name of the target variable")
+    test_size: float = Field(default=0.2, description="Fraction of data for testing (0.1-0.4)")
+
+
+class TrainSimpleModelTool(BaseTool):
+    name: str = "train_simple_model"
+    description: str = """
+    Train a Random Forest model on the cleaned dataset.
+    Input: target_column, test_size (default 0.2)
+    Returns: Model performance metrics and confirmation.
+    """
+    args_schema: Type[BaseModel] = TrainModelInput
+    
+    def _run(self, target_column: str, test_size: float = 0.2) -> str:
+        df = DataStore.get_dataframe()
+        if df is None:
+            return "Error: No dataset loaded"
+        
+        if target_column not in df.columns:
+            return f"Error: Target column '{target_column}' not found"
+        
+        try:
+            # Prepare data
+            X = df.drop(columns=[target_column])
+            y = df[target_column]
+            
+            # Encode categorical features
+            label_encoders = {}
+            X_encoded = X.copy()
+            
+            for col in X_encoded.select_dtypes(include=['object', 'category']).columns:
+                le = LabelEncoder()
+                X_encoded[col] = le.fit_transform(X_encoded[col].astype(str))
+                label_encoders[col] = le
+            
+            # Encode target if categorical
+            target_encoder = None
+            if y.dtype == 'object' or y.dtype.name == 'category':
+                target_encoder = LabelEncoder()
+                y_encoded = target_encoder.fit_transform(y.astype(str))
+                label_encoders['__target__'] = target_encoder
+                problem_type = "classification"
+            else:
+                y_encoded = y.values
+                # Determine problem type based on unique values
+                problem_type = "classification" if y.nunique() <= 10 else "regression"
+            
+            # Split data
+            X_train, X_test, y_train, y_test = train_test_split(
+                X_encoded, y_encoded, test_size=test_size, random_state=42
+            )
+            
+            # Train model
+            if problem_type == "classification":
+                model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
+                model.fit(X_train, y_train)
+                
+                train_score = model.score(X_train, y_train)
+                test_score = model.score(X_test, y_test)
+                
+                metrics = {
+                    "model_type": "RandomForestClassifier",
+                    "problem_type": "classification",
+                    "train_accuracy": round(float(train_score), 4),
+                    "test_accuracy": round(float(test_score), 4),
+                    "n_classes": int(len(np.unique(y_encoded))),
+                }
+            else:
+                model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
+                model.fit(X_train, y_train)
+                
+                train_score = model.score(X_train, y_train)
+                test_score = model.score(X_test, y_test)
+                
+                # Calculate additional metrics
+                y_pred = model.predict(X_test)
+                mse = float(np.mean((y_test - y_pred) ** 2))
+                rmse = float(np.sqrt(mse))
+                
+                metrics = {
+                    "model_type": "RandomForestRegressor",
+                    "problem_type": "regression",
+                    "train_r2": round(float(train_score), 4),
+                    "test_r2": round(float(test_score), 4),
+                    "rmse": round(rmse, 4),
+                }
+            
+            # Feature importance
+            feature_importance = dict(zip(X_encoded.columns, model.feature_importances_))
+            sorted_importance = dict(sorted(feature_importance.items(), key=lambda x: x[1], reverse=True))
+            metrics["top_features"] = {k: round(float(v), 4) for k, v in list(sorted_importance.items())[:10]}
+            
+            # Store model
+            ModelStore.set_model(
+                model=model,
+                model_type=metrics["model_type"],
+                target=target_column,
+                features=list(X_encoded.columns),
+                encoders=label_encoders,
+                metadata=metrics
+            )
+            
+            # Save model to disk
+            os.makedirs("output/models", exist_ok=True)
+            with open("output/models/trained_model.pkl", "wb") as f:
+                pickle.dump({
+                    "model": model,
+                    "encoders": label_encoders,
+                    "features": list(X_encoded.columns),
+                    "target": target_column,
+                    "metrics": metrics
+                }, f)
+            
+            metrics["model_saved"] = "output/models/trained_model.pkl"
+            metrics["status"] = "success"
+            
+            return json.dumps(metrics, indent=2)
+            
+        except Exception as e:
+            return f"Error training model: {str(e)}"
