@@ -66,6 +66,17 @@ class GenerateSHAPSummaryTool(BaseTool):
             
             # Prepare features
             X = df.drop(columns=[target_column])
+            
+            # Handle datetime columns - same as training
+            datetime_cols = X.select_dtypes(include=['datetime64', 'datetime64[ns]']).columns.tolist()
+            for col in datetime_cols:
+                if col in X.columns:
+                    X[f'{col}_year'] = X[col].dt.year
+                    X[f'{col}_month'] = X[col].dt.month
+                    X[f'{col}_day'] = X[col].dt.day
+                    X[f'{col}_dayofweek'] = X[col].dt.dayofweek
+                    X = X.drop(columns=[col])
+            
             X_encoded = X.copy()
             
             for col in X_encoded.select_dtypes(include=['object', 'category']).columns:
@@ -79,10 +90,19 @@ class GenerateSHAPSummaryTool(BaseTool):
             explainer = shap.TreeExplainer(model)
             shap_values = explainer.shap_values(X_encoded)
             
-            # Handle multi-class classification
-            if isinstance(shap_values, list):
-                # For classification, take mean absolute SHAP values across classes
-                shap_values = np.abs(np.array(shap_values)).mean(axis=0)
+            # Handle multi-class classification and different SHAP output formats
+            # shap_values can be a list (binary/multiclass) or a numpy array (regression)
+            if hasattr(shap_values, '__len__') and not isinstance(shap_values, np.ndarray):
+                # It's a list - for classification, use positive class (index 1) or average
+                if len(shap_values) == 2:
+                    # Binary classification - use positive class
+                    shap_values = shap_values[1]
+                else:
+                    # Multi-class - take mean absolute across classes
+                    shap_values = np.abs(np.array(shap_values)).mean(axis=0)
+            
+            # Ensure shap_values is a numpy array
+            shap_values = np.array(shap_values)
             
             # Create summary plot
             os.makedirs(XAIConfig.output_dir, exist_ok=True)
@@ -91,7 +111,19 @@ class GenerateSHAPSummaryTool(BaseTool):
             
             # Calculate mean absolute SHAP values
             mean_shap = np.abs(shap_values).mean(axis=0)
-            feature_importance = dict(zip(feature_columns, mean_shap))
+            
+            # Ensure mean_shap is 1D (flatten if needed)
+            mean_shap = np.asarray(mean_shap).flatten()
+            
+            # Create feature importance dict with safe scalar conversion
+            feature_importance = {}
+            for i, col in enumerate(feature_columns):
+                if i < len(mean_shap):
+                    # Extract scalar value safely
+                    val = mean_shap[i]
+                    feature_importance[col] = float(np.asarray(val).item()) if hasattr(val, '__len__') else float(val)
+            
+            # Sort by importance
             sorted_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)[:max_display]
             
             features = [f[0] for f in sorted_features][::-1]
@@ -171,6 +203,17 @@ class GenerateLIMEExplanationTool(BaseTool):
             
             # Prepare features
             X = df.drop(columns=[target_column])
+            
+            # Handle datetime columns - same as training
+            datetime_cols = X.select_dtypes(include=['datetime64', 'datetime64[ns]']).columns.tolist()
+            for col in datetime_cols:
+                if col in X.columns:
+                    X[f'{col}_year'] = X[col].dt.year
+                    X[f'{col}_month'] = X[col].dt.month
+                    X[f'{col}_day'] = X[col].dt.day
+                    X[f'{col}_dayofweek'] = X[col].dt.dayofweek
+                    X = X.drop(columns=[col])
+            
             X_encoded = X.copy()
             
             for col in X_encoded.select_dtypes(include=['object', 'category']).columns:

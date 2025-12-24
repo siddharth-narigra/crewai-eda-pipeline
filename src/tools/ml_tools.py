@@ -219,6 +219,18 @@ class TrainSimpleModelTool(BaseTool):
             X = df.drop(columns=[target_column])
             y = df[target_column]
             
+            # Handle datetime columns - convert to numeric features
+            datetime_cols = X.select_dtypes(include=['datetime64', 'datetime64[ns]']).columns.tolist()
+            for col in datetime_cols:
+                if col in X.columns:
+                    # Extract useful features from datetime
+                    X[f'{col}_year'] = X[col].dt.year
+                    X[f'{col}_month'] = X[col].dt.month
+                    X[f'{col}_day'] = X[col].dt.day
+                    X[f'{col}_dayofweek'] = X[col].dt.dayofweek
+                    # Drop the original datetime column
+                    X = X.drop(columns=[col])
+            
             # Encode categorical features
             label_encoders = {}
             X_encoded = X.copy()

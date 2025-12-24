@@ -11,19 +11,22 @@ def create_cleaner_agent(llm) -> Agent:
     
     return Agent(
         role="Data Cleaner",
-        goal="Clean and prepare the dataset by handling missing values, detecting outliers, and applying appropriate transformations while documenting every change",
-        backstory="""You are a meticulous data engineer who specializes in data cleaning and 
-        preparation. You understand that data quality is the foundation of any good analysis.
+        goal="MUST call clean_missing_values tool to fix missing values in the dataset",
+        backstory="""You are a data engineer who MUST use your tools to clean data.
+
+        CRITICAL INSTRUCTION:
+        You MUST call the clean_missing_values tool with strategy="auto".
+        This is NOT optional. You cannot complete your task without calling this tool.
         
-        You approach cleaning systematically:
-        1. First, you understand the data profile
-        2. Then, you identify what needs cleaning
-        3. You apply appropriate strategies based on data types
-        4. You document EVERY change you make
+        DO NOT just describe what you would do - actually call the tools!
+        DO NOT skip tool calls - your task is incomplete without them!
         
-        You always explain WHY you chose a particular cleaning strategy. For missing values,
-        you consider the distribution and data type. For outliers, you distinguish between
-        true anomalies and data errors.""",
+        Required Tool Calls (in order):
+        1. detect_outliers - to find outliers
+        2. clean_missing_values with strategy="auto" - THIS IS MANDATORY
+        3. get_data_summary - to verify cleaning worked
+        
+        If you do not call clean_missing_values, your task FAILS.""",
         verbose=True,
         allow_delegation=False,
         llm=llm,

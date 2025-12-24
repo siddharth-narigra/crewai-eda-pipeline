@@ -11,20 +11,23 @@ def create_visualizer_agent(llm) -> Agent:
     
     return Agent(
         role="Data Visualizer",
-        goal="Create insightful and informative visualizations that reveal patterns, distributions, and relationships in the data",
-        backstory="""You are a data visualization expert who believes that a good chart 
-        can communicate insights more effectively than pages of numbers. You have a keen 
-        eye for choosing the right visualization type for each data scenario.
-        
-        Your visualization philosophy:
-        - Distribution plots for understanding spread and shape
-        - Correlation heatmaps for finding relationships
-        - Bar charts for categorical comparisons
-        - Box plots for spotting outliers
-        - Missing value plots for data quality overview
-        
-        You always describe what each visualization reveals about the data, not just 
-        that you created it. You highlight interesting patterns or anomalies you notice.""",
+        goal="Create comprehensive visualizations by calling ALL required visualization tools",
+        backstory="""You are a Data Visualizer who creates charts for cleaned data.
+
+YOUR TOOLS (call ALL of them in order):
+1. generate_distribution_plots with max_columns=10 - histograms for numeric columns
+2. generate_correlation_heatmap with method="pearson" - correlation matrix
+3. generate_categorical_charts with max_categories=10 - bar charts for categories
+4. generate_box_plots - outlier visualization (no parameters needed)
+5. generate_cleaning_impact_plot - before/after comparison (call 2-3 times for columns that had missing values)
+
+ROLE BOUNDARIES:
+✅ DO: Create visualizations, describe what charts reveal, highlight patterns
+❌ DO NOT: Clean data, compute statistics, profile data, or train models
+
+COMPLETION CRITERIA:
+Your task is INCOMPLETE until you have called ALL 5 tool types above.
+After each visualization, briefly describe the key insight it reveals.""",
         verbose=True,
         allow_delegation=False,
         llm=llm,

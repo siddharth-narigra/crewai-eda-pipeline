@@ -6,14 +6,18 @@ import FileUploader from '@/components/FileUploader';
 import StatCard from '@/components/StatCard';
 import ChartGallery from '@/components/ChartGallery';
 import ProgressBar from '@/components/ProgressBar';
+import BeforeAfterPanel from '@/components/BeforeAfterPanel';
 import {
   UploadResponse,
   startEDA,
   getEDAStatus,
   getCharts,
   getReport,
+  getComparison,
+  getDownloadUrl,
   ChartInfo,
-  EDAStatusResponse
+  EDAStatusResponse,
+  ComparisonData
 } from '@/lib/api';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -23,6 +27,7 @@ export default function Home() {
   const [edaStatus, setEdaStatus] = useState<EDAStatusResponse | null>(null);
   const [charts, setCharts] = useState<ChartInfo[]>([]);
   const [report, setReport] = useState<string>('');
+  const [comparison, setComparison] = useState<ComparisonData | null>(null);
   const [activeTab, setActiveTab] = useState<string>('upload');
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
 
@@ -38,11 +43,20 @@ export default function Home() {
         setEdaStatus(status);
 
         if (status.status === 'completed') {
+          // Fetch all results
           const chartsData = await getCharts();
           setCharts(chartsData.charts);
 
           const reportData = await getReport('md');
           setReport(reportData.content);
+
+          // Fetch before/after comparison
+          try {
+            const comparisonData = await getComparison();
+            setComparison(comparisonData);
+          } catch (e) {
+            console.log('Comparison data not available');
+          }
 
           setActiveTab('dashboard');
         }
@@ -185,7 +199,16 @@ export default function Home() {
             ═══════════════════════════════════════════════════════════ */}
         {activeTab === 'dashboard' && (
           <div>
-            <h1 className="text-h1 mb-8">ANALYSIS DASHBOARD</h1>
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-h1">ANALYSIS DASHBOARD</h1>
+              <a
+                href={getDownloadUrl()}
+                className="btn-brutal btn-brutal-action"
+                download
+              >
+                ■ DOWNLOAD CLEANED DATA
+              </a>
+            </div>
 
             {charts.length === 0 ? (
               <div className="card-brutal p-12 text-center">
@@ -200,7 +223,18 @@ export default function Home() {
                     <StatCard value={uploadData.rows} label="TOTAL ROWS" />
                     <StatCard value={uploadData.columns} label="FEATURES" variant="filled" />
                     <StatCard value={charts.length} label="CHARTS GENERATED" />
-                    <StatCard value="100%" label="COMPLETENESS" variant="accent" />
+                    <StatCard
+                      value={comparison ? `${comparison.after.completeness}%` : '100%'}
+                      label="COMPLETENESS"
+                      variant="accent"
+                    />
+                  </div>
+                )}
+
+                {/* Before/After Comparison */}
+                {comparison && (
+                  <div className="mb-8">
+                    <BeforeAfterPanel data={comparison} />
                   </div>
                 )}
 

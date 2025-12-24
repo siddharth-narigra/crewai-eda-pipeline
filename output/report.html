@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDA Report</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        h1 { font-size: 2.5em; }
+        h2 { font-size: 1.8em; margin-top: 30px; }
+        h3 { font-size: 1.4em; }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        ul, ol {
+            padding-left: 20px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <pre style="white-space: pre-wrap; font-family: inherit; background: none; padding: 0;"># EDA Report: Customer Churn Prediction Dataset
+**Date:** October 26, 2023
+**Dataset:** `customer_churn.csv`
+
+## 1. Executive Summary
+*   Dataset contains 505 rows and 12 columns with an initial completeness of 97.62%.
+*   Mandatory cleaning resolved 144 missing values across 6 columns using mean/mode imputation.
+*   Strong positive correlation identified between `annual_income` and `credit_score` (r=0.881).
+*   `purchase_frequency` is the dominant predictor for churn classification (75.98% feature importance).
+*   **Recommendation:** RandomForestClassifier or XGBoost for binary classification of churn.
+
+## 2. Dataset Overview
+*   **Dimensions:** 505 rows × 12 columns
+*   **Memory Usage:** 0.11 MB
+*   **Column Types:**
+    *   **Numeric:** 8 columns (`customer_id`, `age`, `annual_income`, `total_spent`, `avg_order_value`, `purchase_frequency`, `credit_score`, `churned`)
+    *   **Categorical:** 3 columns (`gender`, `region`, `membership_tier`)
+    *   **Datetime:** 1 column (`signup_date`)
+*   **Key Columns:** `churned` (target), `purchase_frequency`, `credit_score`.
+
+## 3. Data Quality & Cleaning
+*   **Missing Values:** 144 missing values detected across 6 columns (`age`, `annual_income`, `credit_score`, `total_spent`, `avg_order_value`, `membership_tier`).
+*   **Outliers:** 240+ outliers detected using IQR method, specifically in `age` (10), `annual_income` (19), and `avg_order_value` (51).
+*   **Imputation Methods:**
+    *   `age`: 19 missing values imputed using Mean (35.89).
+    *   `annual_income`: 25 missing values imputed using Mean ($42,217.67).
+    *   `membership_tier`: 25 missing values imputed using Mode ("Silver").
+
+## 4. Decision Audit Trail
+
+| Column | Operation | Method | Affected Rows | Rationale |
+|--------|-----------|--------|---------------|-----------|
+| `age` | Impute Missing | Mean (35.89) | 19 | Preserves central tendency for continuous numeric data. |
+| `annual_income` | Impute Missing | Mean ($42,217.67) | 25 | Maintains financial distribution characteristics. |
+| `credit_score` | Impute Missing | Mean (586.31) | 25 | Preserves statistical properties of numeric data. |
+| `total_spent` | Impute Missing | Mean ($9,218.32) | 25 | Preserves financial distribution characteristics. |
+| `avg_order_value` | Impute Missing | Mean ($1,040.85) | 25 | Preserves statistical properties of numeric data. |
+| `membership_tier` | Impute Missing | Mode ("Silver") | 25 | Uses most frequent category to preserve categorical distribution. |
+
+## 5. Cleaning Impact Analysis
+*   **`age`:** Mean 35.89→35.89, Std 13.91→13.65, Missing 19→0. Mean imputation added a central spike while preserving distribution shape (charts/impact_age.png).
+*   **`annual_income`:** Mean $42,218→$42,218, Std $23,287→$22,702, Missing 25→0. Mean imputation maintained the right-skewed financial distribution (charts/impact_annual_income.png).
+*   **`credit_score`:** Mean 586→586, Std 135→131, Missing 25→0. Imputation preserved central tendency without distorting the distribution (charts/impact_credit_score.png).
+
+## 6. Statistical Analysis
+*   **Descriptive Statistics:**
+    *   `avg_order_value`: Skewness 5.55, Kurtosis 39.92. Indicates extreme outliers and heavy tails.
+    *   `annual_income`: Skewness 1.97, CV 53.77%. High variability and right-skewed distribution.
+    *   `churned`: Mean 0.2436 (24.4% churn rate). Indicates moderate class imbalance.
+*   **Correlation Analysis (Pearson):**
+    *   `annual_income` vs `credit_score`: r=0.881, p<0.001. Very strong positive relationship.
+    *   `annual_income` vs `total_spent`: r=0.706. Strong positive relationship.
+*   **Categorical Distribution:**
+    *   `membership_tier`: Mode "Silver" (52.08%). Dominant category, justifying mode imputation.
+    *   `gender`: Balanced (Female 47.7%, Male 47.1%).
+
+## 7. Model Recommendation
+*   **Problem Type:** Binary Classification.
+*   **Recommended Model:** **RandomForest**.
+    *   *Technical Justification:* Handles mixed data types (numeric/categorical) natively. Robust against outliers present in `age` and financial columns. Suitable for dataset size (505 rows).
+*   **Alternative:** **XGBoost** for higher accuracy potential on imbalanced data (24.4% churn rate).
+*   **Baseline Performance:** Random Forest achieved 85% accuracy with 65% F1-score (Churn class), confirming feasibility but indicating need for threshold tuning.
+
+## 8. XAI Insights
+*   **LIME Explanation (Row 0):**
+    *   `purchase_frequency` (3.50 < x <= 6.80): Contributed **-0.273** to prediction.
+    *   Prediction Class: 0 (Non-Churned).
+    *   *Interpretation:* High purchase frequency strongly drives the prediction towards Non-Churned for this instance.
+*   **Feature Importance (Baseline Model):**
+    *   `purchase_frequency`: **75.98%** importance. Dominant predictor.
+    *   `age`, `avg_order_value`, `total_spent`: ~2-3% importance each.
+    *   *Interpretation:* Transaction behavior is the primary driver for churn prediction over demographic features.
+
+## 9. Next Steps
+*   **Model Tuning:** Apply SMOTE or class weighting to address the 24.4% class imbalance in `churned`.
+*   **Feature Engineering:** Create ratio features (e.g., `total_spent` / `annual_income`) to normalize financial metrics.
+*   **Validation:** Execute 5-fold cross-validation on the cleaned dataset to estimate out-of-sample performance.
+*   **Monitoring:** Implement data drift detection for `annual_income` and `avg_order_value` due to high variance and skewness.</pre>
+    </div>
+</body>
+</html>

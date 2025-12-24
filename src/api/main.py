@@ -253,7 +253,93 @@ async def get_data_summary():
     }
 
 
+@app.get("/api/data/download")
+async def download_cleaned_data():
+    """Download the cleaned dataset as CSV."""
+    file_path = os.path.join(OUTPUT_DIR, "cleaned_data.csv")
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Cleaned data not found. Run EDA first.")
+    
+    return FileResponse(
+        file_path, 
+        media_type="text/csv",
+        filename="cleaned_data.csv"
+    )
+
+
+@app.get("/api/data/comparison")
+async def get_before_after_comparison():
+    """Get before/after comparison stats for the dataset."""
+    original_df = DataStore.get_original_dataframe()
+    cleaned_df = DataStore.get_dataframe()
+    
+    if original_df is None or cleaned_df is None:
+        raise HTTPException(status_code=404, detail="Data not available. Run EDA first.")
+    
+    # Calculate before stats
+    before_stats = {
+        "rows": len(original_df),
+        "columns": len(original_df.columns),
+        "missing_total": int(original_df.isnull().sum().sum()),
+        "missing_percent": round(original_df.isnull().sum().sum() / (len(original_df) * len(original_df.columns)) * 100, 2),
+        "completeness": round((1 - original_df.isnull().sum().sum() / (len(original_df) * len(original_df.columns))) * 100, 2),
+    }
+    
+    # Calculate after stats
+    after_stats = {
+        "rows": len(cleaned_df),
+        "columns": len(cleaned_df.columns),
+        "missing_total": int(cleaned_df.isnull().sum().sum()),
+        "missing_percent": round(cleaned_df.isnull().sum().sum() / (len(cleaned_df) * len(cleaned_df.columns)) * 100, 2) if len(cleaned_df) > 0 else 0,
+        "completeness": round((1 - cleaned_df.isnull().sum().sum() / (len(cleaned_df) * len(cleaned_df.columns))) * 100, 2) if len(cleaned_df) > 0 else 100,
+    }
+    
+    # Get cleaning logs
+    cleaning_logs = DataStore.get_cleaning_logs()
+    
+    # Get column-level changes
+    column_changes = []
+    for col in original_df.columns:
+        if col in cleaned_df.columns:
+            orig_missing = int(original_df[col].isnull().sum())
+            clean_missing = int(cleaned_df[col].isnull().sum())
+            if orig_missing > 0:
+                column_changes.append({
+                    "column": col,
+                    "before_missing": orig_missing,
+                    "after_missing": clean_missing,
+                    "fixed": orig_missing - clean_missing
+                })
+    
+    return {
+        "before": before_stats,
+        "after": after_stats,
+        "improvement": {
+            "missing_fixed": before_stats["missing_total"] - after_stats["missing_total"],
+            "completeness_gain": round(after_stats["completeness"] - before_stats["completeness"], 2)
+        },
+        "column_changes": column_changes,
+        "cleaning_operations": cleaning_logs[:10] if cleaning_logs else []
+    }
+
+
+@app.get("/api/model/recommendations")
+async def get_model_recommendations():
+    """Get ML model recommendations from the analysis."""
+    recommendations = DataStore.get_metadata("model_recommendations")
+    
+    if recommendations is None:
+        raise HTTPException(status_code=404, detail="Model recommendations not available. Run EDA first.")
+    
+    return {
+        "status": "success",
+        "recommendations": recommendations
+    }
+
+
 # Run with: uvicorn src.api.main:app --reload
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

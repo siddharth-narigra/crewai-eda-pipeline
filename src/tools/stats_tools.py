@@ -90,64 +90,88 @@ class CorrelationAnalysisTool(BaseTool):
     args_schema: Type[BaseModel] = CorrelationAnalysisInput
     
     def _run(self, method: str = "pearson", threshold: float = 0.5) -> str:
-        df = DataStore.get_dataframe()
-        if df is None:
-            return "Error: No dataset loaded"
-        
-        numeric_df = df.select_dtypes(include=[np.number])
-        if len(numeric_df.columns) < 2:
-            return "Need at least 2 numeric columns for correlation analysis"
-        
-        corr_matrix = numeric_df.corr(method=method)
-        
-        correlations = []
-        for i in range(len(corr_matrix.columns)):
-            for j in range(i+1, len(corr_matrix.columns)):
-                col1, col2 = corr_matrix.columns[i], corr_matrix.columns[j]
-                corr_val = corr_matrix.iloc[i, j]
-                
-                if abs(corr_val) >= threshold:
-                    # Calculate p-value for significance
-                    data1 = numeric_df[col1].dropna()
-                    data2 = numeric_df[col2].dropna()
-                    # Align data
-                    common_idx = data1.index.intersection(data2.index)
-                    if len(common_idx) > 2:
-                        if method == 'pearson':
-                            r, p_val = stats.pearsonr(data1[common_idx], data2[common_idx])
-                        elif method == 'spearman':
-                            r, p_val = stats.spearmanr(data1[common_idx], data2[common_idx])
+        try:
+            df = DataStore.get_dataframe()
+            if df is None:
+                return json.dumps({"status": "error", "message": "No dataset loaded"})
+            
+            # Robust input validation - normalize method
+            method = str(method).lower().strip()
+            if method not in ["pearson", "spearman", "kendall"]:
+                method = "pearson"  # Default fallback
+            
+            # Handle threshold as string or various types
+            try:
+                threshold = float(threshold)
+                threshold = max(0.0, min(1.0, threshold))  # Clamp to valid range
+            except (ValueError, TypeError):
+                threshold = 0.5  # Default fallback
+            
+            numeric_df = df.select_dtypes(include=[np.number])
+            if len(numeric_df.columns) < 2:
+                return json.dumps({"status": "error", "message": "Need at least 2 numeric columns"})
+            
+            corr_matrix = numeric_df.corr(method=method)
+            
+            correlations = []
+            for i in range(len(corr_matrix.columns)):
+                for j in range(i+1, len(corr_matrix.columns)):
+                    col1, col2 = corr_matrix.columns[i], corr_matrix.columns[j]
+                    corr_val = corr_matrix.iloc[i, j]
+                    
+                    if abs(corr_val) >= threshold:
+                        # Calculate p-value for significance
+                        data1 = numeric_df[col1].dropna()
+                        data2 = numeric_df[col2].dropna()
+                        # Align data
+                        common_idx = data1.index.intersection(data2.index)
+                        if len(common_idx) > 2:
+                            try:
+                                if method == 'pearson':
+                                    r, p_val = stats.pearsonr(data1[common_idx], data2[common_idx])
+                                elif method == 'spearman':
+                                    r, p_val = stats.spearmanr(data1[common_idx], data2[common_idx])
+                                else:
+                                    r, p_val = stats.kendalltau(data1[common_idx], data2[common_idx])
+                            except Exception:
+                                p_val = None
                         else:
-                            r, p_val = stats.kendalltau(data1[common_idx], data2[common_idx])
-                    else:
-                        p_val = None
+                            p_val = None
 
-                    correlations.append({
-                        "column1": col1,
-                        "column2": col2,
-                        "correlation": round(float(corr_val), 4),
-                        "p_value": round(float(p_val), 6) if p_val is not None else "N/A",
-                        "is_significant": p_val < 0.05 if p_val is not None else False,
-                        "strength": "strong" if abs(corr_val) >= 0.7 else "moderate",
-                        "direction": "positive" if corr_val > 0 else "negative"
-                    })
+                        correlations.append({
+                            "column1": col1,
+                            "column2": col2,
+                            "correlation": round(float(corr_val), 4),
+                            "p_value": round(float(p_val), 6) if p_val is not None else "N/A",
+                            "is_significant": p_val < 0.05 if p_val is not None else False,
+                            "strength": "strong" if abs(corr_val) >= 0.7 else "moderate",
+                            "direction": "positive" if corr_val > 0 else "negative"
+                        })
+            
+            # Sort by absolute correlation value
+            correlations.sort(key=lambda x: abs(x["correlation"]), reverse=True)
+            
+            summary = {
+                "status": "success",
+                "method": method,
+                "test_used": f"{method.capitalize()} Correlation Coefficient",
+                "null_hypothesis": "There is no correlation between the variables",
+                "threshold": threshold,
+                "total_pairs_analyzed": len(corr_matrix.columns) * (len(corr_matrix.columns) - 1) // 2,
+                "significant_correlations": correlations,
+            }
+            
+            # Store in DataStore for reporting
+            DataStore.set_metadata("correlation_analysis", summary)
+            
+            return json.dumps(summary, indent=2)
         
-        # Sort by absolute correlation value
-        correlations.sort(key=lambda x: abs(x["correlation"]), reverse=True)
-        
-        summary = {
-            "method": method,
-            "test_used": f"{method.capitalize()} Correlation Coefficient",
-            "null_hypothesis": "There is no correlation between the variables",
-            "threshold": threshold,
-            "total_pairs_analyzed": len(corr_matrix.columns) * (len(corr_matrix.columns) - 1) // 2,
-            "significant_correlations": correlations,
-        }
-        
-        # Store in DataStore for reporting
-        DataStore.set_metadata("correlation_analysis", summary)
-        
-        return json.dumps(summary, indent=2)
+        except Exception as e:
+            return json.dumps({
+                "status": "error", 
+                "message": f"Correlation analysis failed: {str(e)}",
+                "fallback": "Proceeding with pipeline - correlation data unavailable"
+            })
 
 
 # ============ Categorical Analysis Tool ============

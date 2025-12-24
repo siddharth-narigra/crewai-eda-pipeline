@@ -146,3 +146,79 @@ export async function getModelInfo(): Promise<{
 export function getChartUrl(chartName: string): string {
     return `${API_BASE_URL}/charts/${chartName}`;
 }
+
+/**
+ * Get download URL for cleaned dataset.
+ */
+export function getDownloadUrl(): string {
+    return `${API_BASE_URL}/api/data/download`;
+}
+
+/**
+ * Before/After comparison data.
+ */
+export interface ComparisonData {
+    before: {
+        rows: number;
+        columns: number;
+        missing_total: number;
+        missing_percent: number;
+        completeness: number;
+    };
+    after: {
+        rows: number;
+        columns: number;
+        missing_total: number;
+        missing_percent: number;
+        completeness: number;
+    };
+    improvement: {
+        missing_fixed: number;
+        completeness_gain: number;
+    };
+    column_changes: Array<{
+        column: string;
+        before_missing: number;
+        after_missing: number;
+        fixed: number;
+    }>;
+    cleaning_operations: Array<Record<string, any>>;
+}
+
+/**
+ * Get before/after comparison stats.
+ */
+export async function getComparison(): Promise<ComparisonData> {
+    const response = await fetch(`${API_BASE_URL}/api/data/comparison`);
+
+    if (!response.ok) {
+        throw new Error('Comparison data not available');
+    }
+
+    return response.json();
+}
+
+/**
+ * Get model recommendations.
+ */
+export async function getModelRecommendations(): Promise<{
+    status: string;
+    recommendations: {
+        target_analysis: Record<string, any>;
+        data_characteristics: Record<string, any>;
+        recommended_models: Array<{
+            model: string;
+            priority: number;
+            reason: string;
+        }>;
+        reasoning: string[];
+    };
+}> {
+    const response = await fetch(`${API_BASE_URL}/api/model/recommendations`);
+
+    if (!response.ok) {
+        throw new Error('Recommendations not available');
+    }
+
+    return response.json();
+}

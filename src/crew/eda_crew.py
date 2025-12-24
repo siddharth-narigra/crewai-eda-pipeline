@@ -7,6 +7,8 @@ import os
 import time
 from typing import Optional
 
+import pandas as pd
+
 from crewai import Agent, Crew, Process, Task, LLM
 from dotenv import load_dotenv
 
@@ -202,19 +204,28 @@ class EDACrew:
             description="""
             Clean the dataset based on the profiling results.
             
-            Steps:
-            1. Use detect_outliers to identify outliers in numeric columns
-            2. Use clean_missing_values with strategy='auto' to handle missing data
-            3. Use get_data_summary to verify the cleaning results
+            ⚠️ CRITICAL: You MUST call EACH of these tools in order. Do NOT skip any.
             
-            Document every transformation you make, explaining WHY you chose 
-            each cleaning strategy. The changelog is critical for explainability.
+            Step 1: Call detect_outliers with method="iqr" and columns=[] (empty = all numeric)
+                    → This identifies outliers in the data
+            
+            Step 2: Call clean_missing_values with strategy="auto"
+                    → This is MANDATORY - it fills missing values with mean/median/mode
+                    → You MUST call this tool even if there are few missing values
+            
+            Step 3: Call get_data_summary to verify the cleaning worked
+                    → Check that missing counts are now 0 or reduced
+            
+            ⚠️ Your task is INCOMPLETE if you do not call ALL 3 tools above.
+            ⚠️ The clean_missing_values call is CRITICAL for the before/after comparison.
+            
+            Document every transformation explaining WHY you chose each strategy.
             """,
             expected_output="""A cleaning report containing:
+            - Confirmation that ALL 3 tools were called
             - List of all transformations applied
-            - Explanation for each cleaning decision
-            - Before/after comparison of data quality
-            - The changelog of all changes made""",
+            - Count of missing values fixed per column
+            - Before/after comparison of data quality""",
             agent=self.cleaner,
             context=[profile_task],
         )
@@ -223,24 +234,24 @@ class EDACrew:
             description=f"""
             Create insightful visualizations for the cleaned dataset.
             
-            ⚠️ CRITICAL: You MUST call EACH of the following tools. Do NOT skip any.
-            Call them one by one in this EXACT order:
+            ⚠️ CRITICAL: You MUST call EACH tool type below. Do NOT skip any.
             
-            Step 1: Call generate_distribution_plots with max_columns=10
-            Step 2: Call generate_correlation_heatmap with method="pearson"
-            Step 3: Call generate_categorical_charts with max_categories=10
-            Step 4: Call generate_box_plots (no input needed)
-            Step 5: Call generate_cleaning_impact_plot for "income" column
-            Step 6: Call generate_cleaning_impact_plot for "credit_score" column
-            Step 7: Call generate_cleaning_impact_plot for "education" column
+            Step 1: generate_distribution_plots with max_columns=10
+            Step 2: generate_correlation_heatmap with method="pearson"
+            Step 3: generate_categorical_charts with max_categories=10
+            Step 4: generate_box_plots (no parameters needed)
+            Step 5: generate_cleaning_impact_plot - Call 2-3 times for NUMERIC columns 
+                    that had missing values (check the profiling/cleaning results)
+                    Examples: age, income, credit_score, annual_income, etc.
             
             Charts will be saved to: {self.charts_dir}
             
-            After calling ALL tools, summarize the generated files and key insights.
-            ⚠️ Your task is INCOMPLETE if you do not call ALL 7 tools above.
+            ⚠️ Your task is INCOMPLETE if you skip any of the 5 tool types.
+            
+            For each visualization, briefly describe what pattern or insight it reveals.
             """,
             expected_output="""A visualization report containing:
-            - Confirmation that ALL 7 visualization tools were called
+            - Confirmation that ALL 5 tool types were called
             - List of all generated chart file paths
             - Description of key insights from each visualization""",
             agent=self.visualizer,
@@ -251,22 +262,28 @@ class EDACrew:
             description="""
             Perform comprehensive statistical analysis on the cleaned dataset.
             
-            Analysis steps:
-            1. Use compute_descriptive_stats for all numeric columns
-            2. Use analyze_correlations to find significant relationships
-            3. Use analyze_categorical for categorical columns
-            4. Use detect_patterns.to find duplicates, constants, and other patterns
-            5. Use test_normality on key numeric columns
+            ⚠️ CRITICAL: Call tools with EXACT parameters shown:
             
-            Focus on INSIGHTS, not just numbers. Explain what the statistics mean
-            in practical terms.
+            1. compute_descriptive_stats - no parameters needed
+            2. analyze_correlations with method="pearson", threshold=0.5
+            3. analyze_categorical - no parameters needed
+            4. detect_patterns - no parameters needed
+            5. test_normality - no parameters needed
+            
+            ⚠️ ERROR HANDLING:
+            - If analyze_correlations fails, MOVE ON to the next tool immediately
+            - Do NOT retry failed tools more than once
+            - Partial results are acceptable
+            
+            Focus on INTERPRETING the numbers. Explain what statistics mean in practical terms.
+            For example: "High correlation (0.85) suggests these variables move together..."
             """,
             expected_output="""A statistical analysis report containing:
-            - Key descriptive statistics with interpretations
-            - Significant correlations and their implications
+            - Descriptive statistics with interpretations
+            - Correlation analysis results (or note if it failed)
             - Categorical analysis insights
-            - Detected patterns and recommendations
-            - Normality test results where relevant""",
+            - Detected patterns
+            - Normality test results""",
             agent=self.statistician,
             context=[clean_task],
         )
@@ -335,32 +352,111 @@ class EDACrew:
         )
         
         report_task = Task(
-            description=f"""
-            Consolidate all findings into a comprehensive EDA report with a focus on EXPLAINABILITY.
+            description=f'''
+            Generate a professional, evidence-based EDA report following STRICT formatting rules.
             
-            Create a well-structured report that includes:
+            ═══════════════════════════════════════════════════════════════════════════
+            SECTION ORDER (MANDATORY):
+            ═══════════════════════════════════════════════════════════════════════════
+            1. Executive Summary
+            2. Dataset Overview  
+            3. Data Quality & Cleaning
+            4. Decision Audit Trail
+            5. Cleaning Impact Analysis
+            6. Statistical Analysis
+            7. Model Recommendation
+            8. XAI Insights
+            9. Next Steps
             
-            1. **Executive Summary** (Key findings and high-level data health)
-            2. **Dataset Overview** (Dimensions, types, memory)
-            3. **Data Quality & Quality Flags** (Issues found, structured flags like HIGH_MISSING, etc.)
-            4. **Decision Audit Trail** (Detailed log of every cleaning action, the reason, and the affected rows)
-            5. **Cleaning Impact Analysis** (Pre- vs Post-cleaning statistics and reference to impact plots)
-            6. **Statistical Analysis Rigor** (Results of normality tests, correlation significance with p-values)
-            7. **Model Recommendations** (Suggested algorithms and why)
-            8. **XAI Insights** (SHAP global importance, LIME local explanations)
-            9. **Key Visualizations** (Reference the chart files in {self.charts_dir})
-            10. **Recommendations** (Next steps for modeling based on the findings)
+            ═══════════════════════════════════════════════════════════════════════════
+            WRITING RULES (MANDATORY):
+            ═══════════════════════════════════════════════════════════════════════════
             
-            Format the report in Markdown. Reference chart files using relative paths from the output directory.
+            TONE: Use neutral, factual language only.
+            - Use: "identified", "observed", "measured", "compared", "retained", "rejected"
+            - NEVER use: "excellent", "robust", "successful", "actionable", "high confidence",
+                         "revenue", "growth", "efficiency", "validated" unless with numeric proof
             
-            The "Decision Audit Trail" and "XAI Insights" are the most important sections for explainability.
-            """,
-            expected_output="""A complete Explainable EDA report in Markdown format that:
-            - Features a prominent 'Decision Audit Trail' section
-            - Quantifies the impact of cleaning with before/after stats
-            - Reports statistical significance (p-values) for key findings
-            - Includes SHAP/LIME explanations for model transparency
-            - Clearly justifies every automated decision made by the agents""",
+            STRUCTURE: Each section = 3-6 bullet points maximum. Be concise.
+            
+            EVIDENCE-FIRST: Numbers and data references come BEFORE interpretations.
+            - Correct: "Missing values: 45 (3.2%). Imputed using median."
+            - Wrong: "We successfully handled the missing values."
+            
+            ═══════════════════════════════════════════════════════════════════════════
+            SECTION GUIDELINES:
+            ═══════════════════════════════════════════════════════════════════════════
+            
+            ## 1. Executive Summary
+            - 3-5 bullet points of the MOST IMPORTANT facts only
+            - Include: row count, column count, missing %, key correlations found, recommended model
+            - NO business projections, NO persuasive language
+            
+            ## 2. Dataset Overview
+            - Dimensions: {{rows}} rows × {{columns}} columns
+            - Memory usage: {{X}} MB
+            - Column types: {{N}} numeric, {{M}} categorical, {{K}} datetime
+            - List columns by type
+            
+            ## 3. Data Quality & Cleaning
+            - Report quality flags found (e.g., HIGH_MISSING, OUTLIERS_DETECTED)
+            - List imputation methods with exact counts:
+              "Column 'age': 12 missing values imputed using median (value=35)"
+            
+            ## 4. Decision Audit Trail
+            Format each operation as:
+            | Column | Operation | Method | Affected Rows | Rationale |
+            |--------|-----------|--------|---------------|-----------|
+            - NO emotional words, just facts
+            
+            ## 5. Cleaning Impact Analysis
+            Before vs After comparison:
+            - "Column 'income': Mean 45,230→45,180, Std 12,450→12,380, Missing 8→0"
+            - One validation statement per variable
+            - Reference impact charts: charts/impact_*.png
+            
+            ## 6. Statistical Analysis
+            Report test results neutrally:
+            - "Shapiro-Wilk test on 'age': W=0.987, p=0.342. Null hypothesis not rejected (α=0.05)."
+            - "Pearson correlation 'age' vs 'income': r=0.72, p<0.001"
+            - NO adverbs like "extremely" or "highly"
+            
+            ## 7. Model Recommendation
+            Technical justification only:
+            - Problem type: Classification/Regression
+            - Recommended: RandomForest because [data has N features, mixed types, potential non-linearity]
+            - Alternative: LogisticRegression if interpretability required
+            - NO accuracy estimates without validation, NO business KPIs
+            
+            ## 8. XAI Insights
+            Frame as model behavior analysis:
+            - "SHAP global importance: feature_1 (0.42), feature_2 (0.28), feature_3 (0.15)"
+            - "LIME explanation for row 0: feature_1 contributed +0.32 to prediction"
+            - Reference charts: charts/shap_summary.png, charts/lime_explanation.png
+            - NO "insights for action" language
+            
+            ## 9. Next Steps
+            Concrete analytical steps only:
+            - Train model with cross-validation
+            - Monitor for feature drift
+            - Validate on holdout set
+            - NO marketing or speculative strategy language
+            
+            ═══════════════════════════════════════════════════════════════════════════
+            OUTPUT FORMAT:
+            ═══════════════════════════════════════════════════════════════════════════
+            - Markdown format
+            - Reference charts using: charts/{{filename}}.png
+            - Use tables for structured data
+            - Max 2 pages equivalent length
+            ''',
+            expected_output='''A precise, evidence-based Markdown report that:
+            - Follows the exact 9-section structure
+            - Uses neutral, factual language throughout
+            - Places numbers before interpretations
+            - Contains NO buzzwords or unsupported claims
+            - Includes table-formatted audit trail
+            - References all chart files correctly''',
             agent=self.reporter,
             context=[profile_task, clean_task, visualize_task, stats_task, recommend_task, xai_task],
         )
@@ -410,6 +506,38 @@ class EDACrew:
                     time.sleep(wait_time)
                 else:
                     raise
+        
+        # ═══════════════════════════════════════════════════════════════════════════
+        # FALLBACK: Ensure cleaning happens even if LLM skipped tool calls
+        # ═══════════════════════════════════════════════════════════════════════════
+        cleaned_df = DataStore.get_dataframe()
+        if cleaned_df is not None:
+            missing_before = cleaned_df.isnull().sum().sum()
+            if missing_before > 0:
+                print(f"\n⚠️  Fallback cleaning: {missing_before} missing values found, applying auto-imputation...")
+                for col in cleaned_df.columns:
+                    missing_count = cleaned_df[col].isnull().sum()
+                    if missing_count > 0:
+                        if pd.api.types.is_numeric_dtype(cleaned_df[col]):
+                            fill_value = cleaned_df[col].mean()
+                            method = "mean"
+                        else:
+                            fill_value = cleaned_df[col].mode().iloc[0] if not cleaned_df[col].mode().empty else "Unknown"
+                            method = "mode"
+                        cleaned_df[col] = cleaned_df[col].fillna(fill_value)
+                        print(f"   → {col}: {missing_count} missing → filled with {method}")
+                        
+                        # Log the cleaning
+                        DataStore.add_cleaning_log({
+                            "column": col,
+                            "action": "fallback_impute",
+                            "method": method,
+                            "fill_value": str(fill_value),
+                            "affected_rows_count": int(missing_count),
+                        })
+                
+                DataStore.update_dataframe(cleaned_df, "Fallback cleaning applied")
+                print(f"✓ Fallback cleaning complete. Missing values: {cleaned_df.isnull().sum().sum()}")
         
         # Save the final report
         self._save_reports(result)
