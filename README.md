@@ -132,7 +132,7 @@ graph LR
 ## Folder Structure
 
 ```
-solid-octo-robot/
+crewai-eda-pipeline/
 ├── src/
 │   ├── agents/              # Agent definitions (Cleaner, Profiler, etc.)
 │   ├── api/                 # FastAPI endpoints
