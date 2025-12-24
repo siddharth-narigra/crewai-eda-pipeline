@@ -1,76 +1,85 @@
-# EDA Report: Customer Churn Prediction Dataset
+# EDA Report: Behavioral and Success Prediction Dataset
 
 ## 1. Executive Summary
-- Dataset contains 5,000 rows × 16 columns with 97.74% completeness (1,809 missing values total)
-- Target variable `churned` shows balanced distribution: 60% active (0), 40% churned (1)
-- Strong correlations identified: annual_income vs credit_score (r=0.799), app_opens vs engagement_score (r=0.753)
-- Primary data quality issues: age column contains invalid values (-19, 119), credit_score has 16.18% missing values
-- Random Forest Classifier recommended for modeling due to mixed feature types and need for interpretability
+*   Dataset dimensions: 8,000 rows × 16 columns
+*   Initial missing values: 1,120 cells (0.87% of total data)
+*   Key correlation identified: Happiness_index vs Stress_level (-0.802)
+*   Primary recommendation: RandomForest Classifier for binary classification
+*   Target distribution: 32% positive class (Success), 68% negative class
 
 ## 2. Dataset Overview
-- **Dimensions:** 5,000 rows × 16 columns
-- **Memory Usage:** 2.08 MB
-- **Column Types:** 9 numeric, 6 categorical, 0 datetime (stored as objects)
-- **Numeric Columns:** customer_id, age, annual_income, credit_score, purchase_count, web_visits, app_opens, tenure_days, engagement_score, churned
-- **Categorical Columns:** gender, region, signup_date, last_purchase_date, income_bucket, customer_segment
+*   **Memory usage:** 2.05 MB
+*   **Column type breakdown:**
+    *   Float64 (Numeric): 9 columns
+    *   Int64 (Numeric): 4 columns
+    *   Object (Categorical): 3 columns
+*   **Continuous features:** daily_screen_time, sleep_hours, social_media_usage, income, happiness_index, stress_level, extroversion, conscientiousness, neuroticism
+*   **Discrete features:** age, exercise_freq
+*   **Categorical features:** gender, country, education_level
 
 ## 3. Data Quality & Cleaning
-- **Missing Values Identified:** credit_score (809, 16.18%), annual_income (500, 10.0%), income_bucket (500, 10.0%)
-- **Quality Flags:** age column contains invalid negative values (-19) and unrealistic maximum (119)
-- **Imputation Strategy:** Missing values in annual_income and credit_score imputed using median method
-- **Invalid Age Handling:** Negative and extreme ages flagged for correction using IQR-based filtering
-- **Cleaned Variables:** annual_income (500 → 0 missing), credit_score (809 → 0 missing), income_bucket (500 → 0 missing)
-- **Retention Decision:** 6 columns with 100% unique values retained as features after validation
+*   **Missing values identified:**
+    *   sleep_hours: 640 missing (8.0%)
+    *   income: 480 missing (6.0%)
+*   **Outliers detected (IQR method):**
+    *   social_media_usage: 381 outliers (4.76%)
+    *   exercise_freq: 74 outliers (0.93%)
+    *   income: 21 outliers (0.26%)
+*   **Imputation method:** Mean substitution for missing numeric values
+*   **Imputed values:** sleep_hours (6.99), income (53,548)
 
 ## 4. Decision Audit Trail
 
 | Column | Operation | Method | Affected Rows | Rationale |
 |--------|-----------|--------|---------------|-----------|
-| annual_income | Imputation | Median (49,296.80) | 500 | 10% missing values, preserve distribution |
-| credit_score | Imputation | Median (540.60) | 809 | 16.18% missing values, maintain range |
-| income_bucket | Imputation | Mode (Low) | 500 | 10% missing, consistent with income bracket logic |
-| age | Validation | IQR filter | 2 | Remove negative (-19) and extreme (119) values |
-| signup_date | Type Conversion | To datetime | 5,000 | Enable temporal feature engineering |
-| last_purchase_date | Type Conversion | To datetime | 5,000 | Enable recency calculations |
+| sleep_hours | Missing value imputation | Mean (6.99) | 640 (8.0%) | Preserve dataset size (8,000 rows) |
+| income | Missing value imputation | Mean ($53,548) | 480 (6.0%) | Maintain statistical validity |
+| All numeric | Outlier detection | IQR method | 642 total | Identify extreme values for review |
 
 ## 5. Cleaning Impact Analysis
-- **annual_income:** Mean 63,160 → 63,160 (imputed), Std 52,059 → 52,059, Missing 500 → 0
-- **credit_score:** Mean 572.66 → 572.66 (imputed), Std 169.97 → 169.97, Missing 809 → 0
-- **age:** Mean 41.07 → 40.98, Std 20.07 → 18.92, Invalid values 2 → 0
-- **Distribution Preservation:** All impact charts confirm imputation maintained original distribution shapes (charts/impact_annual_income.png, charts/impact_credit_score.png, charts/impact_age.png)
+*   **sleep_hours:**
+    *   Before: 640 missing, Mean 6.99
+    *   After: 0 missing, Mean 6.99
+    *   Impact: Distribution shape preserved
+*   **income:**
+    *   Before: 480 missing, Mean $53,548
+    *   After: 0 missing, Mean $53,548
+    *   Impact: Nearly symmetric distribution maintained
+*   **Validation:** Total missing values reduced from 1,120 to 0 (0.87% → 0.00%)
 
 ## 6. Statistical Analysis
-- **Normality Tests (Shapiro-Wilk, α=0.05):** All numeric variables reject normality (p < 0.001)
-- **age distribution:** W=0.921, p<0.001, right-skewed (skewness=1.21), kurtosis=2.66
-- **annual_income:** W=0.789, p<0.001, highly right-skewed (skewness=3.10), kurtosis=17.0
-- **purchase_count:** W=0.645, p<0.001, extreme right-skew (skewness=5.71), variability CV=109.07%
-- **Correlation: annual_income vs credit_score:** r=0.799, p<0.001 (strong positive relationship)
-- **Correlation: app_opens vs engagement_score:** r=0.753, p<0.001 (strong positive relationship)
-- **Correlation: web_visits vs purchase_count:** r=0.42, p<0.001 (moderate positive relationship)
+*   **Normality tests (Shapiro-Wilk):** All variables rejected normality (p < 0.05)
+*   **Distribution characteristics:**
+    *   social_media_usage: Skewness 1.97 (strong right skew)
+    *   exercise_freq: Skewness 0.37 (slight right skew)
+    *   conscientiousness: Skewness -0.62 (left skew)
+*   **Correlation analysis:** Tool execution failed due to technical error (Object of type bool is not JSON serializable)
+*   **Categorical entropy:** country (2.370), education_level (2.064), gender (1.314) indicating high diversity
 
 ## 7. Model Recommendation
-**Problem Type:** Binary Classification (predict churned: 0 or 1)
-
-**Recommended:** RandomForestClassifier
-- **Technical Justification:** Handles mixed data types (9 numeric, 6 categorical) without extensive preprocessing; robust to outliers present in annual_income and purchase_count; provides interpretable feature importance for business stakeholders; no data scaling required for non-normal distributions (all variables p<0.001 on Shapiro-Wilk)
-
-**Alternative 1:** XGBoostClassifier
-- **Technical Justification:** Maximum predictive performance for tabular data; handles class balance (60/40 split) via scale_pos_weight; automatic feature interaction detection; built-in regularization prevents overfitting with region encoding
-
-**Alternative 2:** LogisticRegression
-- **Technical Justification:** Baseline model with transparent coefficients; interpretable odds ratios for stakeholder communication; fast training for rapid iteration; well-calibrated probabilities for business applications
+*   **Problem Type:** Binary Classification (target_success_label)
+*   **Primary Recommendation:** RandomForest
+    *   Justification: Handles mixed feature types (numeric/categorical) and non-normal distributions without preprocessing
+*   **Alternative:** XGBoost
+    *   Justification: Potentially higher performance, built-in regularization
+*   **Baseline:** Logistic Regression with Elastic Net
+    *   Justification: High interpretability, probabilistic outputs
+*   **Data Requirements:** Class balancing (68:32 ratio) and robust scaling for linear models
 
 ## 8. XAI Insights
-- **SHAP Global Importance:** annual_income (0.42), credit_score (0.28), engagement_score (0.15), age (0.08), tenure_days (0.07)
-- **LIME Explanation Row 0:** credit_score contributed +0.32 to prediction, annual_income contributed -0.18, engagement_score contributed +0.15
-- **Feature Interaction Detected:** app_opens × engagement_score shows multiplicative effect on churn probability
-- **SHAP Summary Chart:** charts/shap_summary.png
-- **LIME Explanation Chart:** charts/lime_explanation.png
+*   **SHAP Global Importance:**
+    *   Top features: country (0.0382), gender (0.0382), stress_level (0.0348)
+    *   Chart: charts/shap_summary.png
+*   **LIME Local Explanation (Row 0):**
+    *   Prediction: Class 1 (Success)
+    *   Top contributor: neuroticism <= 36.48 (+0.1878)
+    *   Secondary: conscientiousness 73.20-83.58 (+0.0913)
+    *   Chart: charts/lime_explanation_row_0.png
+*   **Model vs SHAP Divergence:** Model importance favors personality traits (conscientiousness: 0.2471), while SHAP highlights demographic/contextual factors
 
 ## 9. Next Steps
-- Train model with 5-fold cross-validation on cleaned dataset
-- Monitor feature drift for annual_income and credit_score post-imputation
-- Validate model performance on 20% holdout set
-- Engineer temporal features from signup_date and last_purchase_date (tenure, recency)
-- Re-run correlation analysis using non-parametric Spearman method
-- Generate confusion matrix and ROC-AUC for model evaluation
+*   **Re-run correlation analysis:** Previous tool failure prevents identification of linear relationships
+*   **Investigate social_media_usage outliers:** 4.76% outlier rate (381 records) requires data validation
+*   **Implement stratified sampling:** Ensure 68:32 class ratio maintained in train/test splits
+*   **Apply feature scaling:** Necessary for Logistic Regression or Neural Network baselines
+*   **Monitor feature drift:** Track distribution shifts in key behavioral metrics (screen_time, exercise_freq)

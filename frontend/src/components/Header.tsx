@@ -54,8 +54,19 @@ export default function Header({ activeTab, onTabChange, isAnalyzing }: HeaderPr
                         ))}
                     </nav>
 
-                    {/* Status */}
-                    <div className="flex items-center gap-3">
+                    {/* Status & Links */}
+                    <div className="flex items-center gap-6">
+                        <a
+                            href="https://github.com/siddharth-narigra/crewai-eda-pipeline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-label hover:underline flex items-center gap-1"
+                        >
+                            VIEW ON GITHUB ↗
+                        </a>
+
+                        <div className="w-[1px] h-6 bg-gray-300" />
+
                         {isAnalyzing ? (
                             <div className="flex items-center gap-2">
                                 <span className="spinner-brutal" />

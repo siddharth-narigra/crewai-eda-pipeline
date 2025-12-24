@@ -95,23 +95,68 @@ export default function Home() {
             ═══════════════════════════════════════════════════════════ */}
         {activeTab === 'upload' && (
           <div>
-            {/* Hero */}
-            <div className="mb-12">
-              <h1 className="text-hero">
-                ANALYZE<br />
-                YOUR<br />
-                <span className="bg-[#FFFF00] px-2">DATA</span>
-              </h1>
-              <p className="text-body mt-4 max-w-xl">
-                Upload a dataset and let AI agents perform comprehensive exploratory
-                data analysis with full transparency and explainability.
-              </p>
+            {/* Split Hero Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-16">
+              {/* Left Column: Typography */}
+              <div>
+                <h1 className="text-hero mb-8">
+                  ANALYZE<br />
+                  YOUR<br />
+                  <span className="inline-block bg-[#FFFF00] border-[5px] border-black px-4 pb-1 mt-4 shadow-[8px_8px_0px_0px_#000000]">
+                    DATA
+                  </span>
+                </h1>
+                <p className="text-body text-lg border-l-[6px] border-black pl-6 py-2 max-w-md">
+                  Upload a dataset and let AI agents perform comprehensive exploratory
+                  data analysis with full transparency and explainability.
+                </p>
+              </div>
+
+              {/* Right Column: Uploader */}
+              <div className="w-full pt-4">
+                <FileUploader onUploadSuccess={handleUploadSuccess} />
+
+                {/* Visual cue pointing to uploader if needed, but the layout is clear enough */}
+              </div>
             </div>
 
-            {/* Upload Zone */}
-            <div className="max-w-2xl">
-              <FileUploader onUploadSuccess={handleUploadSuccess} />
-            </div>
+            {!uploadData && (
+              <div className="mt-0 border-t-[6px] border-black pt-16">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="h-4 w-4 bg-black"></div>
+                  <h2 className="text-h2">SYSTEM CAPABILITIES</h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Card 1 */}
+                  <div className="border-[3px] border-black p-6 bg-white hover:translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000000] transition-all duration-200">
+                    <div className="mb-4 font-black text-4xl text-[#E0E0E0] select-none">01</div>
+                    <h3 className="text-xl font-black mb-3">MULTI-AGENT SWARM</h3>
+                    <p className="text-sm font-mono leading-relaxed">
+                      5 specialized AI agents (Profiler, Cleaner, Statistician) work in parallel to audit and process your data.
+                    </p>
+                  </div>
+
+                  {/* Card 2 */}
+                  <div className="border-[3px] border-black p-6 bg-white hover:translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000000] transition-all duration-200">
+                    <div className="mb-4 font-black text-4xl text-[#E0E0E0] select-none">02</div>
+                    <h3 className="text-xl font-black mb-3">EXPLAINABLE AI</h3>
+                    <p className="text-sm font-mono leading-relaxed">
+                      Integrated SHAP & LIME algorithms ensure every insight is transparent, traceable, and free of black boxes.
+                    </p>
+                  </div>
+
+                  {/* Card 3 */}
+                  <div className="border-[3px] border-black p-6 bg-white hover:translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000000] transition-all duration-200">
+                    <div className="mb-4 font-black text-4xl text-[#E0E0E0] select-none">03</div>
+                    <h3 className="text-xl font-black mb-3">AUTO REPORTING</h3>
+                    <p className="text-sm font-mono leading-relaxed">
+                      Generates comprehensive markdown reports with statistical validation and publication-ready charts instantly.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Data Preview */}
             {uploadData && (
@@ -421,8 +466,15 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t-[6px] border-black mt-12 py-6">
         <div className="container-brutal flex items-center justify-between">
-          <span className="text-label">EXPLAINABLE EDA SYSTEM V2.0</span>
-          <span className="text-label text-[#888]">BUILT WITH CREWAI + SHAP + LIME</span>
+          <span className="text-label">EXPLAINABLE EDA SYSTEM V3.227</span>
+          <a
+            href="https://github.com/siddharth-narigra/crewai-eda-pipeline"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-label text-[#888] hover:text-black hover:underline transition-colors flex items-center gap-1"
+          >
+            VIEW ON GITHUB ↗
+          </a>
         </div>
       </footer>
     </div>
