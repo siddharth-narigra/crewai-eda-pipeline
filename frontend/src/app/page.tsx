@@ -466,7 +466,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t-[6px] border-black mt-12 py-6">
         <div className="container-brutal flex items-center justify-between">
-          <span className="text-label">EXPLAINABLE EDA SYSTEM</span>
+          <span className="text-label">EXPLAINABLE EDA SYSTEM | Siddharth Narigra</span>
           <a
             href="https://github.com/siddharth-narigra/crewai-eda-pipeline"
             target="_blank"
