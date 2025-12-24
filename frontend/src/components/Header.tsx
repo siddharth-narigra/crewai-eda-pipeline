@@ -55,7 +55,7 @@ export default function Header({ activeTab, onTabChange, isAnalyzing }: HeaderPr
                     <div className="flex items-center gap-3">
                         {isAnalyzing ? (
                             <div className="flex items-center gap-2">
-                                <div className="spinner-brutal" />
+                                <span className="spinner-brutal" />
                                 <span className="text-label">ANALYZING</span>
                             </div>
                         ) : (

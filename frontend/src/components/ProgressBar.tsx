@@ -21,7 +21,7 @@ export default function ProgressBar({ progress, status }: ProgressBarProps) {
             </div>
 
             <div className="mt-3 flex items-center gap-2">
-                <div className="spinner-brutal" />
+                <span className="spinner-brutal" />
                 <span className="text-label">{status.toUpperCase()}</span>
             </div>
         </div>

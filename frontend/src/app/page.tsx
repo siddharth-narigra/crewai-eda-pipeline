@@ -30,6 +30,7 @@ export default function Home() {
   const [comparison, setComparison] = useState<ComparisonData | null>(null);
   const [activeTab, setActiveTab] = useState<string>('upload');
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
+  const [showAllColumns, setShowAllColumns] = useState<boolean>(false);
 
   const isAnalyzing = edaStatus?.status === 'running';
 
@@ -142,7 +143,7 @@ export default function Home() {
                       </tr>
                     </thead>
                     <tbody>
-                      {uploadData.column_names.slice(0, 10).map((col, i) => (
+                      {(showAllColumns ? uploadData.column_names : uploadData.column_names.slice(0, 10)).map((col, i) => (
                         <tr key={col}>
                           <td className="text-mono">{i + 1}</td>
                           <td className="text-mono font-semibold">{col}</td>
@@ -154,9 +155,16 @@ export default function Home() {
                         </tr>
                       ))}
                       {uploadData.column_names.length > 10 && (
-                        <tr>
-                          <td colSpan={3} className="text-label text-center">
-                            + {uploadData.column_names.length - 10} MORE COLUMNS
+                        <tr
+                          onClick={() => setShowAllColumns(!showAllColumns)}
+                          className="cursor-pointer hover:bg-[#FFFF00] transition-colors"
+                        >
+                          <td colSpan={3} className="text-label text-center py-3">
+                            {showAllColumns ? (
+                              <span>▲ SHOW LESS</span>
+                            ) : (
+                              <span>▼ + {uploadData.column_names.length - 10} MORE COLUMNS</span>
+                            )}
                           </td>
                         </tr>
                       )}
@@ -172,8 +180,7 @@ export default function Home() {
                 >
                   {isAnalyzing ? (
                     <>
-                      <div className="spinner-brutal border-white border-t-transparent" />
-                      ANALYZING...
+                      <span className="spinner-brutal" /> ANALYZING...
                     </>
                   ) : (
                     <>■ START ANALYSIS</>
@@ -201,13 +208,15 @@ export default function Home() {
           <div>
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-h1">ANALYSIS DASHBOARD</h1>
-              <a
-                href={getDownloadUrl()}
-                className="btn-brutal btn-brutal-action"
-                download
-              >
-                ■ DOWNLOAD CLEANED DATA
-              </a>
+              {charts.length > 0 && (
+                <a
+                  href={getDownloadUrl()}
+                  className="btn-brutal btn-brutal-action"
+                  download
+                >
+                  ■ DOWNLOAD CLEANED DATA
+                </a>
+              )}
             </div>
 
             {charts.length === 0 ? (
