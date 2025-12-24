@@ -65,15 +65,17 @@ class EDACrew:
     Orchestrates the multi-agent EDA workflow.
     """
     
-    def __init__(self, output_dir: str = "output"):
+    def __init__(self, output_dir: str = "output", progress_tracker=None):
         """
         Initialize the EDA Crew.
         
         Args:
             output_dir: Directory for output files
+            progress_tracker: Optional progress tracker for real-time updates
         """
         self.output_dir = output_dir
         self.charts_dir = os.path.join(output_dir, "charts")
+        self.progress_tracker = progress_tracker
         
         # Create output directories
         os.makedirs(self.output_dir, exist_ok=True)
@@ -463,6 +465,80 @@ class EDACrew:
         
         return [profile_task, clean_task, visualize_task, stats_task, recommend_task, train_task, xai_task, report_task]
     
+    def _step_callback(self, step_output):
+        """
+        Callback for each crew step - used for live activity log only.
+        """
+        if not self.progress_tracker:
+            return
+        
+        try:
+            # Extract action/tool info for activity log
+            action = "processing"
+            agent_name = "Agent"
+            
+            # Try to get tool name
+            if hasattr(step_output, 'tool') and step_output.tool:
+                action = str(step_output.tool)
+            elif hasattr(step_output, 'result') and step_output.result:
+                action = str(step_output.result)[:40]
+            
+            # Try to get agent via thought/log for context
+            if hasattr(step_output, 'thought') and step_output.thought:
+                thought = str(step_output.thought)[:30]
+                action = thought if action == "processing" else action
+            
+            self.progress_tracker.log_activity(agent_name, action, "running")
+            
+        except Exception as e:
+            print(f"Step callback error (non-fatal): {e}")
+    
+    def _task_callback(self, task_output):
+        """
+        Callback after each task completes - used for stage completion tracking.
+        This is the RELIABLE way to track progress since it fires after each task.
+        """
+        if not self.progress_tracker:
+            return
+        
+        try:
+            # Get the agent role from the task output
+            agent_role = None
+            if hasattr(task_output, 'agent') and task_output.agent:
+                agent_role = task_output.agent
+            
+            # Map agent roles to stages
+            stage_map = {
+                "Data Profiler": "profiling",
+                "Data Cleaner": "cleaning", 
+                "Data Visualizer": "visualization",
+                "Statistician": "statistics",
+                "Machine Learning Strategist": "ml_xai",
+                "Explainability Specialist": "ml_xai",
+                "Technical Report Writer": "report",
+            }
+            
+            # Stage order for progress tracking
+            stage_order = ["profiling", "cleaning", "visualization", "statistics", "ml_xai", "report"]
+            
+            # Find and complete the stage
+            if agent_role and agent_role in stage_map:
+                completed_stage = stage_map[agent_role]
+                self.progress_tracker.complete_stage(completed_stage)
+                self.progress_tracker.log_activity(agent_role, "task completed", "completed")
+                
+                # Start next stage
+                try:
+                    current_idx = stage_order.index(completed_stage)
+                    if current_idx < len(stage_order) - 1:
+                        next_stage = stage_order[current_idx + 1]
+                        self.progress_tracker.start_stage(next_stage)
+                except ValueError:
+                    pass
+            
+        except Exception as e:
+            print(f"Task callback error (non-fatal): {e}")
+    
     def run(self, df) -> dict:
         """
         Run the EDA workflow on the provided dataframe.
@@ -476,7 +552,36 @@ class EDACrew:
         # Set the dataframe in the shared data store
         DataStore.set_dataframe(df)
         
-        # Create crew with sequential process
+        # Helper to update progress
+        def update_progress(stage_id: str, agent_name: str, action: str = "processing"):
+            if self.progress_tracker:
+                self.progress_tracker.start_stage(stage_id)
+                self.progress_tracker.log_activity(agent_name, action, "running")
+        
+        def complete_progress(stage_id: str, agent_name: str, action: str = "completed"):
+            if self.progress_tracker:
+                self.progress_tracker.complete_stage(stage_id)
+                self.progress_tracker.log_activity(agent_name, action, "completed")
+        
+        # Create tasks with progress tracking
+        tasks = self._create_tasks()
+        
+        # Map tasks to stages for tracking
+        task_stage_map = [
+            ("profiling", "Data Profiler", "profile_dataset"),
+            ("cleaning", "Data Cleaner", "clean_missing_values"),
+            ("visualization", "Data Visualizer", "generate_visualizations"),
+            ("statistics", "Statistician", "analyze_statistics"),
+            ("ml_xai", "ML Strategist", "train_model"),
+            ("ml_xai", "XAI Agent", "generate_explanations"),
+            ("report", "Report Writer", "generate_report"),
+        ]
+        
+        # Start profiling stage
+        if self.progress_tracker:
+            update_progress("profiling", "Data Profiler", "profile_dataset")
+        
+        # Create crew with sequential process and both callbacks
         crew = Crew(
             agents=[
                 self.profiler,
@@ -487,9 +592,11 @@ class EDACrew:
                 self.xai_agent,
                 self.reporter,
             ],
-            tasks=self._create_tasks(),
+            tasks=tasks,
             process=Process.sequential,
             verbose=True,
+            step_callback=self._step_callback if self.progress_tracker else None,
+            task_callback=self._task_callback if self.progress_tracker else None,
         )
         
         # Execute the crew with retry logic for transient API errors
@@ -503,6 +610,8 @@ class EDACrew:
                 if attempt < max_retries - 1 and any(x in error_msg for x in ['rate', 'limit', 'provider', 'timeout', 'api']):
                     wait_time = (attempt + 1) * 30  # 30s, 60s, 90s
                     print(f"\n⚠️  API error (attempt {attempt + 1}/{max_retries}). Waiting {wait_time}s before retry...")
+                    if self.progress_tracker:
+                        self.progress_tracker.log_activity("System", f"API retry in {wait_time}s", "running")
                     time.sleep(wait_time)
                 else:
                     raise

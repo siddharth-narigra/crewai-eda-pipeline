@@ -17,6 +17,7 @@ import pandas as pd
 from src.crew.eda_crew import EDACrew
 from src.tools.data_tools import DataStore
 from src.tools.ml_tools import ModelStore
+from src.api.progress_tracker import tracker
 
 # Create FastAPI application
 app = FastAPI(
@@ -43,7 +44,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # Mount static files for charts
 app.mount("/charts", StaticFiles(directory=os.path.join(OUTPUT_DIR, "charts")), name="charts")
 
-# State tracking
+# State tracking - now using ProgressTracker (kept for backwards compatibility)
 analysis_status = {"status": "idle", "message": "", "progress": 0}
 
 
@@ -90,34 +91,23 @@ async def upload_file(file: UploadFile = File(...)):
 
 def run_eda_background():
     """Background task to run EDA pipeline."""
-    global analysis_status
     try:
-        analysis_status = {"status": "running", "message": "Starting EDA pipeline...", "progress": 10}
+        tracker.reset()
+        tracker.start()
         
         df = DataStore.get_dataframe()
         if df is None:
-            analysis_status = {"status": "error", "message": "No dataset loaded", "progress": 0}
+            tracker.error("No dataset loaded")
             return
         
-        analysis_status["message"] = "Initializing agents..."
-        analysis_status["progress"] = 20
-        
-        crew = EDACrew(output_dir=OUTPUT_DIR)
-        
-        analysis_status["message"] = "Running analysis..."
-        analysis_status["progress"] = 50
+        # Initialize crew with progress tracker
+        crew = EDACrew(output_dir=OUTPUT_DIR, progress_tracker=tracker)
         
         result = crew.run(df)
         
-        analysis_status = {
-            "status": "completed",
-            "message": "Analysis complete!",
-            "progress": 100,
-            "report_path": os.path.join(OUTPUT_DIR, "report.md"),
-            "html_path": os.path.join(OUTPUT_DIR, "report.html")
-        }
+        tracker.complete()
     except Exception as e:
-        analysis_status = {"status": "error", "message": str(e), "progress": 0}
+        tracker.error(str(e))
 
 
 @app.post("/api/eda/run")
@@ -126,15 +116,14 @@ async def run_eda(background_tasks: BackgroundTasks):
     Start the EDA pipeline in the background.
     Use /api/eda/status to check progress.
     """
-    global analysis_status
-    
     if DataStore.get_dataframe() is None:
         raise HTTPException(status_code=400, detail="No dataset loaded. Upload a file first.")
     
-    if analysis_status.get("status") == "running":
+    current_status = tracker.get_status()
+    if current_status.get("status") == "running":
         return {"status": "already_running", "message": "Analysis is already in progress"}
     
-    analysis_status = {"status": "running", "message": "Starting...", "progress": 0}
+    tracker.reset()
     background_tasks.add_task(run_eda_background)
     
     return {"status": "started", "message": "EDA pipeline started. Check /api/eda/status for progress."}
@@ -142,8 +131,8 @@ async def run_eda(background_tasks: BackgroundTasks):
 
 @app.get("/api/eda/status")
 async def get_eda_status():
-    """Get the current status of the EDA pipeline."""
-    return analysis_status
+    """Get the current status of the EDA pipeline with detailed stage and activity info."""
+    return tracker.get_status()
 
 
 @app.get("/api/eda/report")
@@ -164,6 +153,21 @@ async def get_report(format: str = "md"):
         content = f.read()
     
     return {"format": format, "content": content}
+
+
+@app.get("/api/report/download")
+async def download_report():
+    """Download the report as a markdown file."""
+    file_path = os.path.join(OUTPUT_DIR, "report.md")
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Report not found. Run EDA first.")
+    
+    return FileResponse(
+        path=file_path,
+        filename="eda_report.md",
+        media_type="text/markdown"
+    )
 
 
 @app.get("/api/eda/charts")
