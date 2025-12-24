@@ -434,7 +434,7 @@ class EDACrew:
             Frame as model behavior analysis:
             - "SHAP global importance: feature_1 (0.42), feature_2 (0.28), feature_3 (0.15)"
             - "LIME explanation for row 0: feature_1 contributed +0.32 to prediction"
-            - Reference charts: charts/shap_summary.png, charts/lime_explanation.png
+            - Reference charts: charts/shap_summary.png, charts/lime_explanation_row_0.png
             - NO "insights for action" language
             
             ## 9. Next Steps

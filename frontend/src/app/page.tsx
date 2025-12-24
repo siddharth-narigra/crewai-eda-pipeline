@@ -404,8 +404,8 @@ export default function Home() {
                 </aside>
 
                 {/* Report Content */}
-                <div className="card-brutal">
-                  <ReportViewer content={report} />
+                <div className="card-brutal p-8">
+                  <ReportViewer content={report} apiBaseUrl={API_BASE_URL} />
                 </div>
               </div>
             ) : (
