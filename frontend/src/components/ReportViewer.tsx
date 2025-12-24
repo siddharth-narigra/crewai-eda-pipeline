@@ -29,6 +29,37 @@ export default function ReportViewer({ content, apiBaseUrl = 'http://localhost:8
         }
     );
 
+    // ------------------------------------------------------------------------
+    // AUTO-FORMATTING: Wrap plain-text stats in backticks to trigger highlighting
+    // ------------------------------------------------------------------------
+
+    // 1. Memory Usage (Green target) - e.g. "2.08 MB"
+    processedContent = processedContent.replace(
+        /(?<![`])(\b\d+(\.\d+)?\s*[KMGT]B\b)(?![`])/g,
+        '`$1`'
+    );
+
+    // 2. Percentages (Yellow target) - e.g. "97.74%"
+    processedContent = processedContent.replace(
+        /(?<![`])(\b\d+(\.\d+)?%)(?![`])/g,
+        '`$1`'
+    );
+
+    // 3. Snake_case variables (Gray target) - e.g. "annual_income"
+    // Exclude URLs/Path-like strings by checking for slashes
+    processedContent = processedContent.replace(
+        /(?<![`/a-zA-Z])(\b[a-z]+[a-z0-9]*_[a-z0-9_]+\b)(?![`])/g,
+        '`$1`'
+    );
+
+    // 4. Large numbers with commas or plain generic numbers inside specific contexts?
+    // Let's match specific stats explicitly mentioned in user request: "rows", "columns", "missing"
+    // Example: "5,000 rows" -> "`5,000` rows"
+    processedContent = processedContent.replace(
+        /(?<![`])(\b\d{1,3}(,\d{3})*(\.\d+)?)\s+(rows|columns|missing|values|null)(?![`])/gi,
+        '`$1` $4'
+    );
+
     // Helper to generate ID from heading text
     const generateId = (children: React.ReactNode): string => {
         const text = String(children).replace(/^\d+\.\s*/, '').trim();
@@ -187,8 +218,31 @@ export default function ReportViewer({ content, apiBaseUrl = 'http://localhost:8
                     </code>
                 );
             }
+
+            // Intelligent Highlighting Logic
+            const text = String(children);
+            let highlightClass = "bg-[#E0E0E0] text-black"; // Default Gray (variables, etc)
+
+            // 1. GREEN: Memory Usage (e.g., 2.08 MB, 5GB)
+            // Matches number followed optionally by space and B/KB/MB/GB/TB
+            if (/\d+(\.\d+)?\s*[KMGT]B\b/i.test(text)) {
+                highlightClass = "bg-[#00AA00] text-white";
+            }
+            // 2. YELLOW: Important Numericals (Rows, Cols, Missing, Percentages)
+            // Matches pure numbers, percentages, or stats starting with numbers
+            else if (
+                // Pure numbers "5000" or "0.5"
+                /^[\d,.]+%?$/.test(text) ||
+                // Starts with number e.g. "5000 rows"
+                /^\d/.test(text) ||
+                // Keywords with numbers inside e.g. "missing: 50"
+                (/(row|col|missing|null|valid|complete|duplicate)/i.test(text) && /\d/.test(text))
+            ) {
+                highlightClass = "bg-[#FFFF00] text-black";
+            }
+
             return (
-                <code className="bg-[#FFFF00] px-2 py-1 font-mono text-sm font-bold">
+                <code className={`${highlightClass} px-2 py-1 font-mono text-sm font-bold`}>
                     {children}
                 </code>
             );
@@ -235,11 +289,6 @@ export default function ReportViewer({ content, apiBaseUrl = 'http://localhost:8
                         }}
                     />
                 </div>
-                {alt && (
-                    <figcaption className="text-sm text-gray-600 mt-3 font-mono uppercase text-center">
-                        📊 {alt.replace('Chart: ', '')}
-                    </figcaption>
-                )}
             </figure>
         ),
 
