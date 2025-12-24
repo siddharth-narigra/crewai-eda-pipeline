@@ -38,13 +38,16 @@ export default function Header({ activeTab, onTabChange, isAnalyzing }: HeaderPr
                                 className={`
                   px-6 py-3 text-label transition-all
                   ${activeTab === tab.id
-                                        ? 'bg-black text-white'
+                                        ? tab.id === 'upload'
+                                            ? 'text-white'
+                                            : 'bg-black text-white'
                                         : 'bg-white text-black hover:bg-[#F0F0F0]'
                                     }
                   border-[3px] border-black
                   ${activeTab === tab.id ? '' : 'border-l-0'}
                   first:border-l-[3px]
                 `}
+                                style={activeTab === tab.id && tab.id === 'upload' ? { backgroundColor: '#0000FF' } : undefined}
                             >
                                 {tab.label}
                             </button>

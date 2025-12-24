@@ -11,17 +11,21 @@
   --color-gray-light: #F0F0F0;
   --color-gray-mid: #888888;
   --color-gray-dark: #333333;
-  
+
   /* Functional Accent Colors (one per context) */
-  --color-accent-action: #0000FF;    /* Blue - for actions/buttons */
-  --color-accent-warning: #FF0000;   /* Red - for warnings/errors */
-  --color-accent-success: #00AA00;   /* Green - for success states */
-  --color-accent-highlight: #FFFF00; /* Yellow - for highlights */
-  
+  --color-accent-action: #0000FF;
+  /* Blue - for actions/buttons */
+  --color-accent-warning: #FF0000;
+  /* Red - for warnings/errors */
+  --color-accent-success: #00AA00;
+  /* Green - for success states */
+  --color-accent-highlight: #FFFF00;
+  /* Yellow - for highlights */
+
   /* Typography Scale */
   --font-grotesk: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-  
+
   /* Spacing (8px grid) */
   --space-1: 8px;
   --space-2: 16px;
@@ -31,12 +35,12 @@
   --space-6: 48px;
   --space-8: 64px;
   --space-12: 96px;
-  
+
   /* Border */
   --border-thin: 1px solid var(--color-black);
   --border-thick: 3px solid var(--color-black);
   --border-heavy: 6px solid var(--color-black);
-  
+
   /* Backgrounds */
   --background: var(--color-white);
   --foreground: var(--color-black);
@@ -161,12 +165,23 @@ body {
   gap: var(--space-2);
 }
 
-.grid-brutal-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-brutal-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-brutal-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-brutal-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-brutal-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.grid-brutal-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
 
 @media (max-width: 768px) {
-  .grid-brutal-2, .grid-brutal-3, .grid-brutal-4 {
+
+  .grid-brutal-2,
+  .grid-brutal-3,
+  .grid-brutal-4 {
     grid-template-columns: 1fr;
   }
 }
@@ -383,13 +398,28 @@ body {
 
 /* Loading indicator - Brutalist style */
 @keyframes blink-brutal {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
 }
 
 @keyframes pulse-brutal {
-  0%, 100% { transform: scaleX(1); }
-  50% { transform: scaleX(0.8); }
+
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+
+  50% {
+    transform: scaleX(0.8);
+  }
 }
 
 .spinner-brutal {
@@ -419,56 +449,197 @@ body {
   animation: pulse-brutal 0.8s ease-in-out infinite;
 }
 
-.loading-bars span:nth-child(1) { height: 8px; animation-delay: 0s; }
-.loading-bars span:nth-child(2) { height: 16px; animation-delay: 0.1s; }
-.loading-bars span:nth-child(3) { height: 12px; animation-delay: 0.2s; }
+.loading-bars span:nth-child(1) {
+  height: 8px;
+  animation-delay: 0s;
+}
+
+.loading-bars span:nth-child(2) {
+  height: 16px;
+  animation-delay: 0.1s;
+}
+
+.loading-bars span:nth-child(3) {
+  height: 12px;
+  animation-delay: 0.2s;
+}
 
 /* ═══════════════════════════════════════════════════════════
    UTILITIES
    ═══════════════════════════════════════════════════════════ */
 
-.bg-black { background: var(--color-black); }
-.bg-white { background: var(--color-white); }
-.bg-gray { background: var(--color-gray-light); }
-.bg-accent { background: var(--color-accent-action); }
-.bg-warning { background: var(--color-accent-warning); }
-.bg-success { background: var(--color-accent-success); }
-.bg-highlight { background: var(--color-accent-highlight); }
+.bg-black {
+  background: var(--color-black);
+}
 
-.text-black { color: var(--color-black); }
-.text-white { color: var(--color-white); }
-.text-gray { color: var(--color-gray-mid); }
-.text-accent { color: var(--color-accent-action); }
-.text-warning { color: var(--color-accent-warning); }
-.text-success { color: var(--color-accent-success); }
+.bg-white {
+  background: var(--color-white);
+}
 
-.border-b-thick { border-bottom: var(--border-thick); }
-.border-t-thick { border-top: var(--border-thick); }
-.border-l-thick { border-left: var(--border-thick); }
-.border-r-thick { border-right: var(--border-thick); }
+.bg-gray {
+  background: var(--color-gray-light);
+}
 
-.mt-1 { margin-top: var(--space-1); }
-.mt-2 { margin-top: var(--space-2); }
-.mt-3 { margin-top: var(--space-3); }
-.mt-4 { margin-top: var(--space-4); }
-.mt-6 { margin-top: var(--space-6); }
-.mt-8 { margin-top: var(--space-8); }
+.bg-accent {
+  background: var(--color-accent-action);
+}
 
-.mb-1 { margin-bottom: var(--space-1); }
-.mb-2 { margin-bottom: var(--space-2); }
-.mb-3 { margin-bottom: var(--space-3); }
-.mb-4 { margin-bottom: var(--space-4); }
-.mb-6 { margin-bottom: var(--space-6); }
+.bg-warning {
+  background: var(--color-accent-warning);
+}
 
-.p-2 { padding: var(--space-2); }
-.p-3 { padding: var(--space-3); }
-.p-4 { padding: var(--space-4); }
+.bg-success {
+  background: var(--color-accent-success);
+}
 
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.gap-1 { gap: var(--space-1); }
-.gap-2 { gap: var(--space-2); }
-.gap-3 { gap: var(--space-3); }
-.gap-4 { gap: var(--space-4); }
+.bg-highlight {
+  background: var(--color-accent-highlight);
+}
+
+.text-black {
+  color: var(--color-black);
+}
+
+.text-white {
+  color: var(--color-white);
+}
+
+.text-gray {
+  color: var(--color-gray-mid);
+}
+
+.text-accent {
+  color: var(--color-accent-action);
+}
+
+.text-warning {
+  color: var(--color-accent-warning);
+}
+
+.text-success {
+  color: var(--color-accent-success);
+}
+
+.border-b-thick {
+  border-bottom: var(--border-thick);
+}
+
+.border-t-thick {
+  border-top: var(--border-thick);
+}
+
+.border-l-thick {
+  border-left: var(--border-thick);
+}
+
+.border-r-thick {
+  border-right: var(--border-thick);
+}
+
+.mt-1 {
+  margin-top: var(--space-1);
+}
+
+.mt-2 {
+  margin-top: var(--space-2);
+}
+
+.mt-3 {
+  margin-top: var(--space-3);
+}
+
+.mt-4 {
+  margin-top: var(--space-4);
+}
+
+.mt-6 {
+  margin-top: var(--space-6);
+}
+
+.mt-8 {
+  margin-top: var(--space-8);
+}
+
+.mb-1 {
+  margin-bottom: var(--space-1);
+}
+
+.mb-2 {
+  margin-bottom: var(--space-2);
+}
+
+.mb-3 {
+  margin-bottom: var(--space-3);
+}
+
+.mb-4 {
+  margin-bottom: var(--space-4);
+}
+
+.mb-6 {
+  margin-bottom: var(--space-6);
+}
+
+.p-2 {
+  padding: var(--space-2);
+}
+
+.p-3 {
+  padding: var(--space-3);
+}
+
+.p-4 {
+  padding: var(--space-4);
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-1 {
+  gap: var(--space-1);
+}
+
+.gap-2 {
+  gap: var(--space-2);
+}
+
+.gap-3 {
+  gap: var(--space-3);
+}
+
+.gap-4 {
+  gap: var(--space-4);
+}
+
+/* Stage blink animation - brutalist on/off */
+@keyframes stage-blink {
+
+  0%,
+  49% {
+    background-color: #0000FF;
+    border-color: #0000CC;
+  }
+
+  50%,
+  100% {
+    background-color: #000000;
+    border-color: #000000;
+  }
+}
+
+.stage-running {
+  animation: stage-blink 0.6s steps(1) infinite;
+}

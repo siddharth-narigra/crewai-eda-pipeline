@@ -7,6 +7,7 @@ import StatCard from '@/components/StatCard';
 import ChartGallery from '@/components/ChartGallery';
 import ProgressBar from '@/components/ProgressBar';
 import BeforeAfterPanel from '@/components/BeforeAfterPanel';
+import ReportViewer from '@/components/ReportViewer';
 import {
   UploadResponse,
   startEDA,
@@ -132,44 +133,55 @@ export default function Home() {
                 </div>
 
                 {/* Column Table */}
-                <div className="card-brutal mb-6">
-                  <h3 className="text-h3 mb-4">COLUMNS</h3>
-                  <table className="table-brutal">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>NAME</th>
-                        <th>TYPE</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(showAllColumns ? uploadData.column_names : uploadData.column_names.slice(0, 10)).map((col, i) => (
-                        <tr key={col}>
-                          <td className="text-mono">{i + 1}</td>
-                          <td className="text-mono font-semibold">{col}</td>
-                          <td>
-                            <span className="tag-brutal">
-                              {uploadData.dtypes[col]}
-                            </span>
-                          </td>
+                <div
+                  className="border-[4px] border-black bg-white p-6 mb-6"
+                  style={{ boxShadow: '8px 8px 0px 0px #000000' }}
+                >
+                  <h3 className="text-xl font-black uppercase mb-4 pb-2 border-b-[4px] border-black">COLUMNS</h3>
+                  <div className="border-[3px] border-black overflow-hidden">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="bg-black text-white">
+                          <th className="p-3 text-left font-bold uppercase text-sm w-16">#</th>
+                          <th className="p-3 text-left font-bold uppercase text-sm">NAME</th>
+                          <th className="p-3 text-left font-bold uppercase text-sm w-32">TYPE</th>
                         </tr>
-                      ))}
-                      {uploadData.column_names.length > 10 && (
-                        <tr
-                          onClick={() => setShowAllColumns(!showAllColumns)}
-                          className="cursor-pointer hover:bg-[#FFFF00] transition-colors"
-                        >
-                          <td colSpan={3} className="text-label text-center py-3">
-                            {showAllColumns ? (
-                              <span>▲ SHOW LESS</span>
-                            ) : (
-                              <span>▼ + {uploadData.column_names.length - 10} MORE COLUMNS</span>
-                            )}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {(showAllColumns ? uploadData.column_names : uploadData.column_names.slice(0, 10)).map((col, i) => (
+                          <tr
+                            key={col}
+                            className={`border-b-2 border-black ${i % 2 === 0 ? 'bg-white' : 'bg-[#F5F5F5]'} hover:bg-[#FFFF00] transition-colors`}
+                          >
+                            <td className="p-3 font-mono font-bold">{i + 1}</td>
+                            <td className="p-3 font-mono font-semibold">{col}</td>
+                            <td className="p-3">
+                              <span
+                                className="inline-block px-3 py-1 text-xs font-bold uppercase border-[2px] border-black bg-white"
+                                style={{ boxShadow: '2px 2px 0px 0px #000000' }}
+                              >
+                                {uploadData.dtypes[col]}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                        {uploadData.column_names.length > 10 && (
+                          <tr
+                            onClick={() => setShowAllColumns(!showAllColumns)}
+                            className="cursor-pointer bg-[#F0F0F0] hover:bg-[#FFFF00] transition-colors border-t-[3px] border-black"
+                          >
+                            <td colSpan={3} className="p-4 text-center font-bold uppercase text-sm">
+                              {showAllColumns ? (
+                                <span>▲ SHOW LESS</span>
+                              ) : (
+                                <span>▼ + {uploadData.column_names.length - 10} MORE COLUMNS</span>
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 {/* Start Button */}
@@ -195,6 +207,8 @@ export default function Home() {
                 <ProgressBar
                   progress={edaStatus.progress}
                   status={edaStatus.message}
+                  stages={edaStatus.stages}
+                  activityLog={edaStatus.activity_log}
                 />
               </div>
             )}
@@ -348,56 +362,50 @@ export default function Home() {
             ═══════════════════════════════════════════════════════════ */}
         {activeTab === 'report' && (
           <div>
-            <h1 className="text-h1 mb-8">ANALYSIS REPORT</h1>
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-h1">ANALYSIS REPORT</h1>
+              {report && (
+                <a
+                  href={`${API_BASE_URL}/api/report/download`}
+                  download
+                  className="btn-brutal btn-brutal-action"
+                >
+                  ■ DOWNLOAD REPORT
+                </a>
+              )}
+            </div>
 
             {report ? (
-              <div className="grid grid-cols-[200px_1fr] gap-6">
-                {/* Table of Contents */}
+              <div className="grid grid-cols-[220px_1fr] gap-6">
+                {/* Table of Contents - Dynamic */}
                 <aside className="sticky top-4 self-start">
                   <div className="card-brutal-filled">
                     <h3 className="text-h3 text-white mb-4">SECTIONS</h3>
                     <nav className="flex flex-col gap-2">
-                      {['SUMMARY', 'OVERVIEW', 'QUALITY', 'AUDIT', 'STATS', 'XAI'].map((section) => (
-                        <a
-                          key={section}
-                          href={`#${section.toLowerCase()}`}
-                          className="text-label text-white hover:text-[#FFFF00]"
-                        >
-                          ■ {section}
-                        </a>
-                      ))}
+                      {/* Extract sections from report (## headings) */}
+                      {report.split('\n')
+                        .filter(line => line.startsWith('## ') || line.startsWith('# '))
+                        .map((line) => {
+                          const level = line.startsWith('## ') ? 2 : 1;
+                          const text = line.replace(/^##?\s*\d*\.?\s*/, '').trim();
+                          const id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-');
+                          return (
+                            <a
+                              key={id}
+                              href={`#${id}`}
+                              className={`text-label text-white hover:text-[#FFFF00] transition-colors ${level === 1 ? 'font-bold' : 'pl-2 text-sm'}`}
+                            >
+                              {level === 1 ? '●' : '■'} {text.toUpperCase().slice(0, 20)}{text.length > 20 ? '...' : ''}
+                            </a>
+                          );
+                        })}
                     </nav>
                   </div>
                 </aside>
 
                 {/* Report Content */}
                 <div className="card-brutal">
-                  <div className="prose max-w-none">
-                    {report.split('\n').map((line, i) => {
-                      if (line.startsWith('# ')) {
-                        return <h1 key={i} className="text-h1 mt-8 mb-4">{line.slice(2)}</h1>;
-                      }
-                      if (line.startsWith('## ')) {
-                        return <h2 key={i} className="text-h2 mt-6 mb-3 border-b-[3px] border-black pb-2">{line.slice(3)}</h2>;
-                      }
-                      if (line.startsWith('### ')) {
-                        return <h3 key={i} className="text-h3 mt-4 mb-2">{line.slice(4)}</h3>;
-                      }
-                      if (line.startsWith('- ')) {
-                        return <li key={i} className="text-body ml-4">{line.slice(2)}</li>;
-                      }
-                      if (line.startsWith('**') && line.endsWith('**')) {
-                        return <p key={i} className="text-body font-bold my-2">{line.slice(2, -2)}</p>;
-                      }
-                      if (line.trim() === '---') {
-                        return <hr key={i} className="divider-brutal my-6" />;
-                      }
-                      if (line.trim()) {
-                        return <p key={i} className="text-body my-2">{line}</p>;
-                      }
-                      return null;
-                    })}
-                  </div>
+                  <ReportViewer content={report} />
                 </div>
               </div>
             ) : (

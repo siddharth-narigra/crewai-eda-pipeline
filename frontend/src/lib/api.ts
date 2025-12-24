@@ -15,10 +15,26 @@ export interface UploadResponse {
     memory_mb: number;
 }
 
+export interface StageInfo {
+    id: string;
+    name: string;
+    status: 'pending' | 'running' | 'completed';
+}
+
+export interface ActivityLogEntry {
+    time: string;
+    agent: string;
+    action: string;
+    status: 'running' | 'completed' | 'error';
+}
+
 export interface EDAStatusResponse {
     status: 'idle' | 'running' | 'completed' | 'error';
     message: string;
     progress: number;
+    current_stage?: string;
+    stages?: StageInfo[];
+    activity_log?: ActivityLogEntry[];
     report_path?: string;
     html_path?: string;
 }
