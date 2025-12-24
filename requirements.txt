@@ -1,6 +1,7 @@
 # Core Framework
 crewai>=0.86.0
 crewai-tools>=0.17.0
+litellm>=1.0.0
 
 # Data Processing
 pandas>=2.0.0
