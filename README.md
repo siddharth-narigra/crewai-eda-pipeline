@@ -94,7 +94,7 @@ graph LR
 
    ```bash
    git clone https://github.com/siddharth-narigra/crewai-eda-pipeline.git
-   cd major-project-II
+   cd crewai-eda-pipeline
    ```
 2. **Backend Setup**:
 
@@ -132,7 +132,7 @@ graph LR
 ## Folder Structure
 
 ```
-crewai-eda-pipeline/
+https://github.com/siddharth-narigra/crewai-eda-pipeline/
 ├── src/
 │   ├── agents/              # Agent definitions (Cleaner, Profiler, etc.)
 │   ├── api/                 # FastAPI endpoints
