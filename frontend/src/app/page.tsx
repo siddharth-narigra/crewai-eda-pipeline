@@ -320,11 +320,35 @@ export default function Home() {
                 )}
 
                 {/* Before/After Comparison */}
-                {comparison && (
-                  <div className="mb-8">
-                    <BeforeAfterPanel data={comparison} />
-                  </div>
-                )}
+                {comparison ? (
+                  comparison.improvement.missing_fixed === 0 && comparison.improvement.completeness_gain === 0 ? (
+                    <div className="mb-8">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-2 h-8 bg-black" />
+                        <h2 className="text-h2">DATA QUALITY</h2>
+                      </div>
+                      <div className="card-brutal p-8 text-center bg-[#00AA00]/10 border-l-[6px] border-l-[#00AA00]">
+                        <div className="text-4xl mb-4">✓</div>
+                        <p className="text-h3 text-[#00AA00]">DATA ALREADY CLEAN</p>
+                        <p className="text-label mt-2 text-gray-600">No cleaning operations were necessary - your dataset is already in good shape!</p>
+                        <div className="mt-4 flex justify-center gap-8">
+                          <div>
+                            <p className="text-stat">{comparison.before.completeness}%</p>
+                            <p className="text-label">COMPLETENESS</p>
+                          </div>
+                          <div>
+                            <p className="text-stat">{comparison.before.missing_total}</p>
+                            <p className="text-label">MISSING VALUES</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mb-8">
+                      <BeforeAfterPanel data={comparison} />
+                    </div>
+                  )
+                ) : null}
 
                 {/* Key Charts Preview */}
                 <div className="section-accented mb-8">
