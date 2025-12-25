@@ -38,11 +38,17 @@ app.add_middleware(
 # Configuration
 UPLOAD_DIR = "uploads"
 OUTPUT_DIR = "output"
+CHARTS_DIR = os.path.join(OUTPUT_DIR, "charts")
+MODELS_DIR = os.path.join(OUTPUT_DIR, "models")
+
+# Create required directories on startup
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(CHARTS_DIR, exist_ok=True)
+os.makedirs(MODELS_DIR, exist_ok=True)
 
 # Mount static files for charts
-app.mount("/charts", StaticFiles(directory=os.path.join(OUTPUT_DIR, "charts")), name="charts")
+app.mount("/charts", StaticFiles(directory=CHARTS_DIR), name="charts")
 
 # State tracking - now using ProgressTracker (kept for backwards compatibility)
 analysis_status = {"status": "idle", "message": "", "progress": 0}
