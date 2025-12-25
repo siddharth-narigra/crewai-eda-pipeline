@@ -16,21 +16,9 @@ export default function ReportViewer({ content, apiBaseUrl = 'http://localhost:8
         .replace(/^```\s*\n?/, '')  // Remove leading ```
         .replace(/\n?```\s*$/, ''); // Remove trailing ```
 
-    // Convert chart file references to markdown images
-    // Pattern: charts/filename.png or output/charts/filename.png
-    processedContent = processedContent.replace(
-        /(?:output\/)?charts\/([a-zA-Z0-9_-]+\.png)/g,
-        (match, filename) => {
-            // Handle the lime_explanation.png -> lime_explanation_row_0.png mapping
-            const correctedFilename = filename === 'lime_explanation.png'
-                ? 'lime_explanation_row_0.png'
-                : filename;
-            return `![Chart: ${filename}](${apiBaseUrl}/charts/${correctedFilename})`;
-        }
-    );
-
     // ------------------------------------------------------------------------
     // AUTO-FORMATTING: Wrap plain-text stats in backticks to trigger highlighting
+    // MUST run BEFORE chart conversion to avoid breaking paths
     // ------------------------------------------------------------------------
 
     // 1. Memory Usage (Green target) - e.g. "2.08 MB"
@@ -46,18 +34,32 @@ export default function ReportViewer({ content, apiBaseUrl = 'http://localhost:8
     );
 
     // 3. Snake_case variables (Gray target) - e.g. "annual_income"
-    // Exclude URLs/Path-like strings by checking for slashes
+    // Exclude paths by checking for slashes/backslashes before or after
     processedContent = processedContent.replace(
-        /(?<![`/a-zA-Z])(\b[a-z]+[a-z0-9]*_[a-z0-9_]+\b)(?![`])/g,
+        /(?<![`\/\\a-zA-Z])(\b[a-z]+[a-z0-9]*_[a-z0-9_]+\b)(?![`\/\\])/g,
         '`$1`'
     );
 
-    // 4. Large numbers with commas or plain generic numbers inside specific contexts?
-    // Let's match specific stats explicitly mentioned in user request: "rows", "columns", "missing"
-    // Example: "5,000 rows" -> "`5,000` rows"
+    // 4. Numbers with stat keywords - e.g. "5,000 rows"
     processedContent = processedContent.replace(
         /(?<![`])(\b\d{1,3}(,\d{3})*(\.\d+)?)\s+(rows|columns|missing|values|null)(?![`])/gi,
         '`$1` $4'
+    );
+
+    // ------------------------------------------------------------------------
+    // Convert chart file references to markdown images
+    // Pattern: charts/filename.png or output/charts/filename.png (handles both / and \)
+    // Also handles paths wrapped in backticks like `output\charts\file.png`
+    // ------------------------------------------------------------------------
+    processedContent = processedContent.replace(
+        /`?(?:output[\/\\])?charts[\/\\]([a-zA-Z0-9_-]+\.png)`?/g,
+        (match, filename) => {
+            // Handle the lime_explanation.png -> lime_explanation_row_0.png mapping
+            const correctedFilename = filename === 'lime_explanation.png'
+                ? 'lime_explanation_row_0.png'
+                : filename;
+            return `\n\n![Chart](${apiBaseUrl}/charts/${correctedFilename})\n\n`;
+        }
     );
 
     // Helper to generate ID from heading text
@@ -275,10 +277,10 @@ export default function ReportViewer({ content, apiBaseUrl = 'http://localhost:8
             </a>
         ),
 
-        // Images - Charts with proper styling
+        // Images - Charts with proper styling (using spans to avoid p > div/figure nesting errors)
         img: ({ src, alt }) => (
-            <figure className="my-8">
-                <div className="border-[3px] border-black p-2 bg-white shadow-[4px_4px_0px_0px_#000000]">
+            <span className="block my-8">
+                <span className="block border-[3px] border-black p-2 bg-white shadow-[4px_4px_0px_0px_#000000]">
                     <img
                         src={src}
                         alt={alt || 'Chart'}
@@ -288,8 +290,8 @@ export default function ReportViewer({ content, apiBaseUrl = 'http://localhost:8
                             (e.target as HTMLImageElement).style.display = 'none';
                         }}
                     />
-                </div>
-            </figure>
+                </span>
+            </span>
         ),
 
         // Horizontal rule - Section divider
