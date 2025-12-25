@@ -206,7 +206,7 @@ export default function ReportViewer({ content, apiBaseUrl = 'http://localhost:8
         ),
         li: ({ children }) => (
             <li className="pl-6 relative before:content-['▸'] before:absolute before:left-0 before:text-black before:font-bold">
-                {children} 
+                {children}
             </li>
         ),
 
@@ -279,15 +279,18 @@ export default function ReportViewer({ content, apiBaseUrl = 'http://localhost:8
 
         // Images - Charts with proper styling (using spans to avoid p > div/figure nesting errors)
         img: ({ src, alt }) => (
-            <span className="block my-8">
+            <span className="block my-8 chart-container">
                 <span className="block border-[3px] border-black p-2 bg-white shadow-[4px_4px_0px_0px_#000000]">
                     <img
                         src={src}
                         alt={alt || 'Chart'}
                         className="w-full max-h-[500px] object-contain"
                         onError={(e) => {
-                            // Hide broken images
-                            (e.target as HTMLImageElement).style.display = 'none';
+                            // Hide the entire container (border box) when image fails
+                            const container = (e.target as HTMLImageElement).closest('.chart-container');
+                            if (container) {
+                                (container as HTMLElement).style.display = 'none';
+                            }
                         }}
                     />
                 </span>

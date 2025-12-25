@@ -45,7 +45,9 @@ export default function Header({ activeTab, onTabChange, isAnalyzing }: HeaderPr
                                                 ? 'text-black'
                                                 : tab.id === 'model'
                                                     ? 'text-white'
-                                                    : 'bg-black text-white'
+                                                    : tab.id === 'dashboard'
+                                                        ? 'text-white'
+                                                        : 'bg-black text-white'
                                         : 'bg-white text-black hover:bg-[#F0F0F0]'
                                     }
                   border-[3px] border-black
@@ -59,7 +61,9 @@ export default function Header({ activeTab, onTabChange, isAnalyzing }: HeaderPr
                                             ? { backgroundColor: '#FFFF00' }
                                             : activeTab === tab.id && tab.id === 'model'
                                                 ? { backgroundColor: '#00AA00' }
-                                                : undefined
+                                                : activeTab === tab.id && tab.id === 'dashboard'
+                                                    ? { backgroundColor: '#7f7f7f' }
+                                                    : undefined
                                 }
                             >
                                 {tab.label}
