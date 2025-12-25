@@ -206,7 +206,7 @@ export default function ReportViewer({ content, apiBaseUrl = 'http://localhost:8
         ),
         li: ({ children }) => (
             <li className="pl-6 relative before:content-['▸'] before:absolute before:left-0 before:text-black before:font-bold">
-                {children}
+                {children} 
             </li>
         ),
 
