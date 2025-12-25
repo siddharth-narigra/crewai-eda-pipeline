@@ -342,6 +342,65 @@ async def get_model_recommendations():
     }
 
 
+@app.get("/api/model/stats")
+async def get_model_stats():
+    """Get comprehensive model statistics and metadata."""
+    import pickle
+    
+    model_path = os.path.join(OUTPUT_DIR, "models", "trained_model.pkl")
+    
+    if not os.path.exists(model_path):
+        raise HTTPException(status_code=404, detail="No trained model found. Run EDA first.")
+    
+    try:
+        with open(model_path, "rb") as f:
+            model_data = pickle.load(f)
+        
+        metrics = model_data.get("metrics", {})
+        
+        # Get file size
+        file_size_mb = round(os.path.getsize(model_path) / 1024 / 1024, 2)
+        
+        return {
+            "status": "success",
+            "model_type": metrics.get("model_type", "Unknown"),
+            "problem_type": metrics.get("problem_type", "Unknown"),
+            "target_column": model_data.get("target", "Unknown"),
+            "features": model_data.get("features", []),
+            "feature_count": len(model_data.get("features", [])),
+            "metrics": {
+                # Classification metrics
+                "train_accuracy": metrics.get("train_accuracy"),
+                "test_accuracy": metrics.get("test_accuracy"),
+                "n_classes": metrics.get("n_classes"),
+                # Regression metrics
+                "train_r2": metrics.get("train_r2"),
+                "test_r2": metrics.get("test_r2"),
+                "rmse": metrics.get("rmse"),
+            },
+            "top_features": metrics.get("top_features", {}),
+            "file_size_mb": file_size_mb,
+            "model_path": "output/models/trained_model.pkl"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error reading model: {str(e)}")
+
+
+@app.get("/api/model/download")
+async def download_model():
+    """Download the trained model as a .pkl file."""
+    model_path = os.path.join(OUTPUT_DIR, "models", "trained_model.pkl")
+    
+    if not os.path.exists(model_path):
+        raise HTTPException(status_code=404, detail="No trained model found. Run EDA first.")
+    
+    return FileResponse(
+        path=model_path,
+        filename="trained_model.pkl",
+        media_type="application/octet-stream"
+    )
+
+
 # Run with: uvicorn src.api.main:app --reload
 if __name__ == "__main__":
     import uvicorn

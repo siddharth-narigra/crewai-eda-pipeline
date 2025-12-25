@@ -11,6 +11,7 @@ export default function Header({ activeTab, onTabChange, isAnalyzing }: HeaderPr
         { id: 'upload', label: 'UPLOAD' },
         { id: 'dashboard', label: 'DASHBOARD' },
         { id: 'charts', label: 'CHARTS' },
+        { id: 'model', label: 'MODEL' },
         { id: 'report', label: 'REPORT' },
     ];
 
@@ -40,14 +41,26 @@ export default function Header({ activeTab, onTabChange, isAnalyzing }: HeaderPr
                   ${activeTab === tab.id
                                         ? tab.id === 'upload'
                                             ? 'text-white'
-                                            : 'bg-black text-white'
+                                            : tab.id === 'charts'
+                                                ? 'text-black'
+                                                : tab.id === 'model'
+                                                    ? 'text-white'
+                                                    : 'bg-black text-white'
                                         : 'bg-white text-black hover:bg-[#F0F0F0]'
                                     }
                   border-[3px] border-black
                   ${activeTab === tab.id ? '' : 'border-l-0'}
                   first:border-l-[3px]
                 `}
-                                style={activeTab === tab.id && tab.id === 'upload' ? { backgroundColor: '#0000FF' } : undefined}
+                                style={
+                                    activeTab === tab.id && tab.id === 'upload'
+                                        ? { backgroundColor: '#0000FF' }
+                                        : activeTab === tab.id && tab.id === 'charts'
+                                            ? { backgroundColor: '#FFFF00' }
+                                            : activeTab === tab.id && tab.id === 'model'
+                                                ? { backgroundColor: '#00AA00' }
+                                                : undefined
+                                }
                             >
                                 {tab.label}
                             </button>

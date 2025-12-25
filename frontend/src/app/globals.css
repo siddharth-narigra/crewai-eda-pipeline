@@ -197,6 +197,21 @@ body {
   padding: var(--space-3);
 }
 
+/* Card without padding - for edge-to-edge content */
+.card-brutal-edge {
+  background: var(--color-white);
+  border: var(--border-thick);
+  padding: 0;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.card-brutal-edge:hover {
+  transform: translate(2px, -2px);
+  box-shadow: 6px 6px 0px 0px var(--color-black);
+}
+
 .card-brutal-filled {
   background: var(--color-black);
   color: var(--color-white);

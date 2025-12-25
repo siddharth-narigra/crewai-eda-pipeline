@@ -81,10 +81,10 @@ export default function ProgressBar({ progress, status, stages, activityLog }: P
             </div>
 
             {/* Patience message - brutalist yellow banner */}
-            <div className="bg-[#FFFF00] border-[3px] border-black p-4 mb-8">
+            <div className="bg-[#FFFF00] border-[3px] border-black p-4 mb-8 flex items-start gap-3">
+                <img src="/circle-1.svg" alt="" className="w-5 h-5 flex-shrink-0 mt-0.5" />
                 <p className="font-bold text-sm uppercase tracking-wide">
-                    ⚠️ THIS ANALYSIS INVOLVES <span className="underline">6 AI AGENTS</span> WORKING SEQUENTIALLY.
-                    TYPICALLY TAKES <span className="underline">2-5 MINUTES</span>. PLEASE BE PATIENT.
+                    THIS ANALYSIS INVOLVES <span className="underline">6 AI AGENTS</span> WORKING SEQUENTIALLY. TYPICALLY TAKES <span className="underline">6-7 MINUTES</span>. PLEASE BE PATIENT.
                 </p>
             </div>
 

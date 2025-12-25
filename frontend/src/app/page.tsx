@@ -8,6 +8,7 @@ import ChartGallery from '@/components/ChartGallery';
 import ProgressBar from '@/components/ProgressBar';
 import BeforeAfterPanel from '@/components/BeforeAfterPanel';
 import ReportViewer from '@/components/ReportViewer';
+import ModelViewer from '@/components/ModelViewer';
 import {
   UploadResponse,
   startEDA,
@@ -32,6 +33,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<string>('upload');
   const [selectedChart, setSelectedChart] = useState<string | null>(null);
   const [showAllColumns, setShowAllColumns] = useState<boolean>(false);
+  const [modelStats, setModelStats] = useState<any>(null);
 
   const isAnalyzing = edaStatus?.status === 'running';
 
@@ -60,6 +62,17 @@ export default function Home() {
             console.log('Comparison data not available');
           }
 
+          // Fetch model stats
+          try {
+            const modelRes = await fetch(`${API_BASE_URL}/api/model/stats`);
+            if (modelRes.ok) {
+              const modelData = await modelRes.json();
+              setModelStats(modelData);
+            }
+          } catch (e) {
+            console.log('Model stats not available');
+          }
+
           setActiveTab('dashboard');
         }
       }, 2000);
@@ -82,14 +95,14 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white flex flex-col">
       <Header
         activeTab={activeTab}
         onTabChange={setActiveTab}
         isAnalyzing={isAnalyzing}
       />
 
-      <main className="container-brutal py-8">
+      <main className="container-brutal py-8 flex-1">
         {/* ═══════════════════════════════════════════════════════════
             UPLOAD TAB
             ═══════════════════════════════════════════════════════════ */}
@@ -279,9 +292,16 @@ export default function Home() {
             </div>
 
             {charts.length === 0 ? (
-              <div className="card-brutal p-12 text-center">
-                <p className="text-h3">NO DATA AVAILABLE</p>
-                <p className="text-label mt-2">RUN AN ANALYSIS FIRST</p>
+              <div className="card-brutal-edge">
+                <div className="flex items-stretch">
+                  <div className="aspect-square w-56 bg-black flex items-center justify-center shrink-0">
+                    <img src="/dashboard.svg" alt="" className="w-32 h-32" />
+                  </div>
+                  <div className="flex-1 p-8 flex flex-col justify-center border-l-0">
+                    <p className="text-xl font-black uppercase tracking-tight mb-1">NO DATA AVAILABLE</p>
+                    <p className="text-sm text-gray-500 tracking-wide">Upload a dataset and run the EDA analysis to see your dashboard.</p>
+                  </div>
+                </div>
               </div>
             ) : (
               <>
@@ -361,9 +381,16 @@ export default function Home() {
             </div>
 
             {charts.length === 0 ? (
-              <div className="card-brutal p-12 text-center">
-                <p className="text-h3">NO CHARTS YET</p>
-                <p className="text-label mt-2">RUN AN ANALYSIS FIRST</p>
+              <div className="card-brutal-edge">
+                <div className="flex items-stretch">
+                  <div className="aspect-square w-56 bg-black flex items-center justify-center shrink-0">
+                    <img src="/visualization.svg" alt="" className="w-32 h-32" />
+                  </div>
+                  <div className="flex-1 p-8 flex flex-col justify-center">
+                    <p className="text-xl font-black uppercase tracking-tight mb-1">NO CHARTS YET</p>
+                    <p className="text-sm text-gray-500 tracking-wide">Run the EDA analysis first to generate visualizations.</p>
+                  </div>
+                </div>
               </div>
             ) : (
               <ChartGallery
@@ -400,6 +427,13 @@ export default function Home() {
               </div>
             )}
           </div>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════
+            MODEL TAB
+            ═══════════════════════════════════════════════════════════ */}
+        {activeTab === 'model' && (
+          <ModelViewer modelStats={modelStats} apiBaseUrl={API_BASE_URL} charts={charts} />
         )}
 
         {/* ═══════════════════════════════════════════════════════════
@@ -454,9 +488,16 @@ export default function Home() {
                 </div>
               </div>
             ) : (
-              <div className="card-brutal p-12 text-center">
-                <p className="text-h3">NO REPORT YET</p>
-                <p className="text-label mt-2">RUN AN ANALYSIS FIRST</p>
+              <div className="card-brutal-edge">
+                <div className="flex items-stretch">
+                  <div className="aspect-square w-56 bg-black flex items-center justify-center shrink-0">
+                    <img src="/report.svg" alt="" className="w-32 h-32" />
+                  </div>
+                  <div className="flex-1 p-8 flex flex-col justify-center">
+                    <p className="text-xl font-black uppercase tracking-tight mb-1">NO REPORT YET</p>
+                    <p className="text-sm text-gray-500 tracking-wide">Run the EDA analysis first to generate a comprehensive report.</p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -464,7 +505,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t-[6px] border-black mt-12 py-6">
+      <footer className="border-t-[6px] border-black py-6 mt-auto">
         <div className="container-brutal flex items-center justify-between">
           <span className="text-label">EXPLAINABLE EDA SYSTEM | Siddharth Narigra</span>
           <a
