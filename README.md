@@ -1,4 +1,4 @@
-# plainable Multi-Agent System for Automated Data Analysis
+#  plainable Multi-Agent System for Automated Data Analysis
 
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
@@ -38,7 +38,7 @@ flowchart LR
     Output -->|Display| Frontend
 ```
 
-`<sub>`Detailed Architecture Diagram (for nerds)`</sub>`
+<sub>Detailed Architecture Diagram (for nerds)</sub>
 
 ```mermaid
 flowchart TB
@@ -219,13 +219,13 @@ flowchart TB
 <div align="center">
 <table>
   <tr>
-    <td align="center"><img src="screenshots/upload.png" width="350"/><br/><b>Upload</b></td>
-    <td align="center"><img src="screenshots/charts.png" width="350"/><br/><b>Charts</b></td>
-    <td align="center" rowspan="2"><img src="screenshots/report.png" width="350"/><br/><b>Report</b></td>
+    <td align="center"><b>Upload</b><br/><img src="screenshots/upload.png" width="350"/></td>
+    <td align="center"><b>Charts</b><br/><img src="screenshots/charts.png" width="350"/></td>
+    <td align="center" rowspan="2"><b>Report</b><br/><img src="screenshots/report.png" width="350"/></td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/dashboard.png" width="350"/><br/><b>Dashboard</b></td>
-    <td align="center"><img src="screenshots/model.png" width="350"/><br/><b>Model</b></td>
+    <td align="center"><b>Dashboard</b><br/><img src="screenshots/dashboard.png" width="350"/></td>
+    <td align="center"><b>Model</b><br/><img src="screenshots/model.png" width="350"/></td>
   </tr>
 </table>
 </div>
