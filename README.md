@@ -219,13 +219,22 @@ flowchart TB
 <div align="center">
 <table>
   <tr>
-    <td align="center"><b>Upload</b><br/><img src="screenshots/upload.png" width="350"/></td>
-    <td align="center"><b>Charts</b><br/><img src="screenshots/charts.png" width="350"/></td>
-    <td align="center" rowspan="2"><b>Report</b><br/><img src="screenshots/report.png" width="350"/></td>
+    <th><sub>Upload</sub></th>
+    <th><sub>Charts</sub></th>
+    <th><sub>Report</sub></th>
   </tr>
   <tr>
-    <td align="center"><b>Dashboard</b><br/><img src="screenshots/dashboard.png" width="350"/></td>
-    <td align="center"><b>Model</b><br/><img src="screenshots/model.png" width="350"/></td>
+    <td><img src="screenshots/upload.png" width="350"/></td>
+    <td><img src="screenshots/charts.png" width="350"/></td>
+    <td rowspan="3" align="center"><img src="screenshots/report.png" width="350"/></td>
+  </tr>
+  <tr>
+    <th><sub>Dashboard</sub></th>
+    <th><sub>Model</sub></th>
+  </tr>
+  <tr>
+    <td><img src="screenshots/dashboard.png" width="350"/></td>
+    <td><img src="screenshots/model.png" width="350"/></td>
   </tr>
 </table>
 </div>
