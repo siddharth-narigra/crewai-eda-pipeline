@@ -19,21 +19,155 @@ This system automates the Exploratory Data Analysis (EDA) pipeline using a Multi
 ## Architecture Diagram
 
 ```mermaid
-graph LR
-    User[User] -->|Upload CSV| UI[Next.js Frontend]
-    UI -->|API Request| API[FastAPI Backend]
-    API -->|Trigger| Crew[CrewAI Orchestrator]
-  
-    subgraph Agents
-        Profiler --> Cleaner
-        Cleaner --> Statistician
-        Statistician --> Visualizer
-        Visualizer --> Reporter
+flowchart TB
+    subgraph UserInterface["User Interface Layer"]
+        User["User"]
+        subgraph NextJS["Next.js Frontend"]
+            FileUploader["FileUploader"]
+            ProgressBar["ProgressBar"]
+            Dashboard["Dashboard Page"]
+            ReportViewer["ReportViewer"]
+            ChartGallery["ChartGallery"]
+            ModelViewer["ModelViewer"]
+            BeforeAfter["BeforeAfterPanel"]
+        end
     end
-  
-    Crew --> Agents
-    Agents -->|Generate| Output[Report & Charts]
-    Output -->|Display| UI
+
+    subgraph APILayer["API Layer"]
+        subgraph FastAPI["FastAPI Backend"]
+            Upload["/api/upload"]
+            RunEDA["/api/eda/run"]
+            Status["/api/eda/status"]
+            Report["/api/report"]
+            Charts["/api/charts"]
+            Model["/api/model"]
+            SHAP["/api/shap"]
+        end
+        ProgressTracker["ProgressTracker"]
+    end
+
+    subgraph OrchestrationLayer["Orchestration Layer"]
+        EDACrew["EDACrew Orchestrator"]
+        LLM["LLM Provider via OpenRouter"]
+        TaskQueue["Task Sequencing"]
+        Callbacks["Step and Task Callbacks"]
+    end
+
+    subgraph AgentLayer["Agent Layer"]
+        direction LR
+        Profiler["Data Profiler Agent"]
+        Cleaner["Data Cleaner Agent"]
+        Statistician["Statistician Agent"]
+        Visualizer["Data Visualizer Agent"]
+        ModelRec["Model Recommender Agent"]
+        XAIAgent["XAI Agent"]
+        Reporter["Technical Report Writer"]
+    end
+
+    subgraph ToolsLayer["Tools Layer"]
+        subgraph DataTools["Data Tools"]
+            ProfileDataset["ProfileDatasetTool"]
+            DetectOutliers["DetectOutliersTool"]
+            CleanMissing["CleanMissingValuesTool"]
+            GetColumnInfo["GetColumnInfoTool"]
+            GetDataSummary["GetDataSummaryTool"]
+        end
+        subgraph StatsTools["Statistics Tools"]
+            DescriptiveStats["DescriptiveStatsTool"]
+            CorrelationAnalysis["CorrelationAnalysisTool"]
+            CategoricalAnalysis["CategoricalAnalysisTool"]
+            DetectPatterns["DetectPatternsTool"]
+            NormalityTest["NormalityTestTool"]
+        end
+        subgraph VizTools["Visualization Tools"]
+            DistributionPlots["DistributionPlotsTool"]
+            CorrelationHeatmap["CorrelationHeatmapTool"]
+            CategoricalCharts["CategoricalChartsTool"]
+            BoxPlots["BoxPlotsTool"]
+            CleaningImpact["CleaningImpactPlotTool"]
+            DataQualitySummary["DataQualitySummaryTool"]
+        end
+        subgraph MLTools["ML Tools"]
+            SuggestModels["SuggestModelsBasedOnDataTool"]
+            TrainModel["TrainSimpleModelTool"]
+        end
+        subgraph XAITools["XAI Tools"]
+            SHAPSummary["GenerateSHAPSummaryTool"]
+            LIMEExplanation["GenerateLIMEExplanationTool"]
+            FeatureImportance["CompareFeatureImportanceTool"]
+        end
+    end
+
+    subgraph DataLayer["Data Layer"]
+        DataStore["DataStore Singleton"]
+        OriginalDF["Original DataFrame"]
+        CleanedDF["Cleaned DataFrame"]
+        Changelog["Changelog"]
+        Metadata["Metadata"]
+    end
+
+    subgraph OutputLayer["Output Layer"]
+        OutputDir["output/"]
+        ChartsDir["output/charts/"]
+        ModelsDir["output/models/"]
+        ReportMD["report.md"]
+        ReportHTML["report.html"]
+        CleanedCSV["cleaned_data.csv"]
+        PNGCharts["*.png Charts"]
+        ModelPKL["model.pkl"]
+    end
+
+    User -->|"Upload CSV/Excel"| FileUploader
+    FileUploader -->|"POST /api/upload"| Upload
+    Dashboard -->|"POST /api/eda/run"| RunEDA
+    ProgressBar -->|"GET /api/eda/status"| Status
+    ReportViewer -->|"GET /api/report"| Report
+    ChartGallery -->|"GET /api/charts"| Charts
+    ModelViewer -->|"GET /api/model"| Model
+
+    Upload -->|"Store File"| DataStore
+    RunEDA -->|"Trigger Background Task"| EDACrew
+    Status -->|"Query Status"| ProgressTracker
+
+    EDACrew -->|"Create LLM"| LLM
+    EDACrew -->|"Sequence Tasks"| TaskQueue
+    EDACrew -->|"Track Progress"| Callbacks
+    Callbacks -->|"Update"| ProgressTracker
+
+    TaskQueue -->|"1. Profile"| Profiler
+    TaskQueue -->|"2. Clean"| Cleaner
+    TaskQueue -->|"3. Analyze"| Statistician
+    TaskQueue -->|"4. Visualize"| Visualizer
+    TaskQueue -->|"5. Recommend"| ModelRec
+    TaskQueue -->|"6. Explain"| XAIAgent
+    TaskQueue -->|"7. Report"| Reporter
+
+    Profiler --> DataTools
+    Cleaner --> DataTools
+    Statistician --> StatsTools
+    Visualizer --> VizTools
+    ModelRec --> MLTools
+    XAIAgent --> XAITools
+
+    DataTools --> DataStore
+    StatsTools --> DataStore
+    VizTools --> DataStore
+    MLTools --> DataStore
+    XAITools --> DataStore
+
+    DataStore --> OriginalDF
+    DataStore --> CleanedDF
+    DataStore --> Changelog
+    DataStore --> Metadata
+
+    VizTools --> ChartsDir
+    MLTools --> ModelsDir
+    Reporter --> ReportMD
+    Reporter --> ReportHTML
+    DataTools --> CleanedCSV
+
+    ChartsDir --> PNGCharts
+    ModelsDir --> ModelPKL
 ```
 
 ## Architecture Explanation
