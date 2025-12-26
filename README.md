@@ -19,6 +19,28 @@ This system automates the Exploratory Data Analysis (EDA) pipeline using a Multi
 ## Architecture Diagram
 
 ```mermaid
+flowchart LR
+    User[User] -->|Upload Dataset| Frontend[Next.js Frontend]
+    Frontend -->|REST API| Backend[FastAPI Backend]
+    Backend -->|Orchestrate| Crew[CrewAI EDACrew]
+    
+    subgraph Agents[Specialized Agents]
+        direction TB
+        A1[Profiler] --> A2[Cleaner]
+        A2 --> A3[Statistician]
+        A3 --> A4[Visualizer]
+        A4 --> A5[XAI Agent]
+        A5 --> A6[Reporter]
+    end
+    
+    Crew --> Agents
+    Agents -->|Generate| Output[Reports and Charts]
+    Output -->|Display| Frontend
+```
+
+<sub>Detailed Architecture Diagram (for nerds)</sub>
+
+```mermaid
 flowchart TB
     subgraph UserInterface["User Interface Layer"]
         User["User"]
@@ -173,12 +195,15 @@ flowchart TB
 ## Architecture Explanation
 
 - **Data Ingestion Module**: `src/api/main.py` handles file uploads via FastAPI, validating formats (.csv, .xlsx) and storing them safely.
-- **Agent Orchestrator**: `src/crew/` utilizes CrewAI to manage the lifecycle of agents, ensuring tasks are executed in the correct dependency order.
-- **Specialized Agents**:
-  - `Profiler`: Audits data quality and structure.
-  - `Cleaner`: Implements cleaning logic (imputation, outlier removal) using Pandas.
-  - `Statistician/Visualizer`: leverages Scikit-learn and Matplotlib/Seaborn to generate insights.
-- **XAI Engine**: `src/agents/xai_agent.py` calculates SHAP values and LIME explanations to interpret model findings.
+- **Agent Orchestrator**: `src/crew/eda_crew.py` utilizes CrewAI to manage the lifecycle of agents, ensuring tasks are executed in the correct sequential order.
+- **Specialized Agents** (7 total):
+  - `Profiler`: Audits data quality, structure, and identifies issues.
+  - `Cleaner`: Handles missing values and outlier detection using Pandas.
+  - `Statistician`: Performs statistical analysis (correlations, normality tests, pattern detection).
+  - `Visualizer`: Generates charts using Matplotlib/Seaborn (distributions, heatmaps, box plots).
+  - `Model Recommender`: Suggests and trains ML models using Scikit-learn.
+  - `XAI Agent`: Computes SHAP values and LIME explanations for model interpretability.
+  - `Reporter`: Compiles all findings into structured Markdown/HTML reports.
 - **Frontend UI**: A Next.js application that provides a real-time dashboard for monitoring progress and viewing interactive reports.
 
 ## Key Features
@@ -204,10 +229,12 @@ flowchart TB
 1. **Upload**: User uploads a dataset via the Web UI.
 2. **Profiling**: The `Profiler` agent scans the file for schema, types, and quality issues.
 3. **Cleaning**: The `Cleaner` agent executes transformations to fix identified issues.
-4. **Analysis**: `Statistician` and `Visualizer` agents run in parallel to generate stats and charts.
-5. **Explanation**: The `XAIAgent` computes feature importance and local explanations.
-6. **Reporting**: The `Reporter` agent compiles all artifacts into a cohesive narrative.
-7. **Review**: User views the final report and charts on the Dashboard.
+4. **Statistical Analysis**: The `Statistician` agent computes descriptive stats, correlations, and pattern detection.
+5. **Visualization**: The `Visualizer` agent generates distribution plots, heatmaps, and box plots.
+6. **Model Training**: The `Model Recommender` agent suggests and trains an appropriate ML model.
+7. **Explanation**: The `XAI Agent` computes SHAP/LIME explanations for model interpretability.
+8. **Reporting**: The `Reporter` agent compiles all artifacts into a cohesive narrative.
+9. **Review**: User views the final report and charts on the Dashboard.
 
 ## Input Format
 
@@ -216,11 +243,13 @@ flowchart TB
 
 ## Output Format
 
-- **Interactive Report**: displayed directly in the UI.
+- **Interactive Report**: Displayed directly in the UI.
 - **Files**:
-  - `report.md`: Comprehensive markdown report.
+  - `report.md`: Comprehensive Markdown report.
+  - `report.html`: Styled HTML report for business users.
   - `cleaned_data.csv`: The processed dataset.
   - `charts/*.png`: Generated visualizations.
+  - `models/model.pkl`: Trained ML model (if applicable).
 
 ## Installation Instructions
 
@@ -266,16 +295,19 @@ flowchart TB
 ## Folder Structure
 
 ```
-https://github.com/siddharth-narigra/crewai-eda-pipeline/
+crewai-eda-pipeline/
 ├── src/
-│   ├── agents/              # Agent definitions (Cleaner, Profiler, etc.)
-│   ├── api/                 # FastAPI endpoints
-│   ├── crew/                # CrewAI orchestration
-│   └── tools/               # Custom tools (DataStore, Plotting)
+│   ├── agents/              # Agent definitions (Profiler, Cleaner, Statistician, etc.)
+│   ├── api/                 # FastAPI endpoints and progress tracking
+│   ├── crew/                # CrewAI orchestration (eda_crew.py)
+│   ├── tools/               # Custom tools (data, stats, viz, ml, xai)
+│   └── utils/               # Utility functions (file handling)
 ├── frontend/                # Next.js Web Application
-├── output/                  # Generated artifacts (Reports, Charts)
-├── uploaded/                # Temporary storage for uploads
-├── requirements.txt         # Backend dependencies
+│   └── src/components/      # React components (FileUploader, ReportViewer, etc.)
+├── output/                  # Generated artifacts (Reports, Charts, Models)
+├── uploads/                 # Temporary storage for uploaded files
+├── sample_data/             # Sample datasets for testing
+├── requirements.txt         # Backend Python dependencies
 └── README.md                # This document
 ```
 
