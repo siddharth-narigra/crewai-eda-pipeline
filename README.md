@@ -23,7 +23,7 @@ flowchart LR
     User[User] -->|Upload Dataset| Frontend[Next.js Frontend]
     Frontend -->|REST API| Backend[FastAPI Backend]
     Backend -->|Orchestrate| Crew[CrewAI EDACrew]
-    
+  
     subgraph Agents[Specialized Agents]
         direction TB
         A1[Profiler] --> A2[Cleaner]
@@ -32,13 +32,13 @@ flowchart LR
         A4 --> A5[XAI Agent]
         A5 --> A6[Reporter]
     end
-    
+  
     Crew --> Agents
     Agents -->|Generate| Output[Reports and Charts]
     Output -->|Display| Frontend
 ```
 
-<sub>Detailed Architecture Diagram (for nerds)</sub>
+`<sub>`Detailed Architecture Diagram (for nerds)`</sub>`
 
 ```mermaid
 flowchart TB
@@ -213,6 +213,41 @@ flowchart TB
 - **Automated Data Cleaning**: Intelligent handling of missing values and outliers with audit logs.
 - **Interactive Dashboard**: Modern UI for easy upload, monitoring, and report consumption.
 - **Dual-Format Reporting**: Generates both Markdown (for devs) and HTML (for business) reports.
+
+## Screenshots
+
+<!-- OPTION 1: Thumbnail Grid -->
+
+| Upload                          | Dashboard                             | Charts                          | Model                         | Report                          |
+| ------------------------------- | ------------------------------------- | ------------------------------- | ----------------------------- | ------------------------------- |
+| ![Upload](screenshots/upload.png) | ![Dashboard](screenshots/dashboard.png) | ![Charts](screenshots/charts.png) | ![Model](screenshots/model.png) | ![Report](screenshots/report.png) |
+
+<!-- OPTION 2: Collapsible Sections -->
+
+<details>
+<summary>View Full Screenshots (Click to expand)</summary>
+
+### Upload Page
+
+![Upload Page](screenshots/upload.png)
+
+### Dashboard
+
+![Dashboard](screenshots/dashboard.png)
+
+### Charts Gallery
+
+![Charts](screenshots/charts.png)
+
+### Model Viewer
+
+![Model](screenshots/model.png)
+
+### Report Viewer
+
+![Report](screenshots/report.png)
+
+</details>
 
 ## Tech Stack (With Purpose)
 
