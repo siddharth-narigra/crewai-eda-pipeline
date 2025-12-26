@@ -1,4 +1,4 @@
-# Explainable Multi-Agent System for Automated Data Analysis
+# plainable Multi-Agent System for Automated Data Analysis
 
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
@@ -216,38 +216,19 @@ flowchart TB
 
 ## Screenshots
 
-<!-- OPTION 1: Thumbnail Grid -->
-
-| Upload                          | Dashboard                             | Charts                          | Model                         | Report                          |
-| ------------------------------- | ------------------------------------- | ------------------------------- | ----------------------------- | ------------------------------- |
-| ![Upload](screenshots/upload.png) | ![Dashboard](screenshots/dashboard.png) | ![Charts](screenshots/charts.png) | ![Model](screenshots/model.png) | ![Report](screenshots/report.png) |
-
-<!-- OPTION 2: Collapsible Sections -->
-
-<details>
-<summary>View Full Screenshots (Click to expand)</summary>
-
-### Upload Page
-
-![Upload Page](screenshots/upload.png)
-
-### Dashboard
-
-![Dashboard](screenshots/dashboard.png)
-
-### Charts Gallery
-
-![Charts](screenshots/charts.png)
-
-### Model Viewer
-
-![Model](screenshots/model.png)
-
-### Report Viewer
-
-![Report](screenshots/report.png)
-
-</details>
+<div align="center">
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/dashboard.png" width="350"/><br/><b>Dashboard</b></td>
+    <td align="center"><img src="screenshots/model.png" width="350"/><br/><b>Model</b></td>
+    <td align="center" rowspan="2"><img src="screenshots/report.png" width="350"/><br/><b>Report</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/upload.png" width="350"/><br/><b>Upload</b></td>
+    <td align="center"><img src="screenshots/charts.png" width="350"/><br/><b>Charts</b></td>
+  </tr>
+</table>
+</div>
 
 ## Tech Stack (With Purpose)
 
