@@ -1,4 +1,4 @@
-#  plainable Multi-Agent System for Automated Data Analysis
+#  Explainable Multi-Agent System for Automated Data Analysis
 
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
