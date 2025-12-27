@@ -271,7 +271,6 @@ flowchart TB
 - **Interactive Report**: Displayed directly in the UI.
 - **Files**:
   - `report.md`: Comprehensive Markdown report.
-  - `report.html`: Styled HTML report for business users.
   - `cleaned_data.csv`: The processed dataset.
   - `charts/*.png`: Generated visualizations.
   - `models/model.pkl`: Trained ML model (if applicable).
