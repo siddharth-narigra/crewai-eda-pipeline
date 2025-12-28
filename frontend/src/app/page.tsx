@@ -496,9 +496,9 @@ export default function Home() {
                             <a
                               key={id}
                               href={`#${id}`}
-                              className={`text-label text-white hover:text-[#FFFF00] transition-colors ${level === 1 ? 'font-bold' : 'pl-2 text-sm'}`}
+                              className={`text-label text-white hover:text-[#FFFF00] transition-colors leading-tight ${level === 1 ? 'font-bold' : 'pl-2 text-xs'}`}
                             >
-                              {level === 1 ? '●' : '■'} {text.toUpperCase().slice(0, 20)}{text.length > 20 ? '...' : ''}
+                              {level === 1 ? '●' : '■'} {text.toUpperCase()}
                             </a>
                           );
                         })}
