@@ -6,6 +6,8 @@ Provides tools for model recommendation and simple model training.
 import json
 import os
 import pickle
+import time
+from datetime import datetime
 from typing import Any, Type
 
 import numpy as np
@@ -15,6 +17,9 @@ from pydantic import BaseModel, Field
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import (
+    precision_score, recall_score, f1_score, confusion_matrix, mean_absolute_error
+)
 
 from src.tools.data_tools import DataStore
 
@@ -257,24 +262,49 @@ class TrainSimpleModelTool(BaseTool):
                 X_encoded, y_encoded, test_size=test_size, random_state=42
             )
             
+            # Training start time
+            start_time = time.time()
+            
             # Train model
             if problem_type == "classification":
                 model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
                 model.fit(X_train, y_train)
                 
+                # Training duration
+                training_duration = round(time.time() - start_time, 2)
+                
                 train_score = model.score(X_train, y_train)
                 test_score = model.score(X_test, y_test)
+                
+                # Predictions for additional metrics
+                y_pred = model.predict(X_test)
+                
+                # Classification metrics
+                avg_method = 'weighted' if len(np.unique(y_encoded)) > 2 else 'binary'
+                precision = precision_score(y_test, y_pred, average=avg_method, zero_division=0)
+                recall = recall_score(y_test, y_pred, average=avg_method, zero_division=0)
+                f1 = f1_score(y_test, y_pred, average=avg_method, zero_division=0)
+                
+                # Confusion matrix
+                cm = confusion_matrix(y_test, y_pred)
                 
                 metrics = {
                     "model_type": "RandomForestClassifier",
                     "problem_type": "classification",
                     "train_accuracy": round(float(train_score), 4),
                     "test_accuracy": round(float(test_score), 4),
+                    "precision": round(float(precision), 4),
+                    "recall": round(float(recall), 4),
+                    "f1_score": round(float(f1), 4),
                     "n_classes": int(len(np.unique(y_encoded))),
+                    "confusion_matrix": cm.tolist(),
                 }
             else:
                 model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
                 model.fit(X_train, y_train)
+                
+                # Training duration
+                training_duration = round(time.time() - start_time, 2)
                 
                 train_score = model.score(X_train, y_train)
                 test_score = model.score(X_test, y_test)
@@ -283,6 +313,7 @@ class TrainSimpleModelTool(BaseTool):
                 y_pred = model.predict(X_test)
                 mse = float(np.mean((y_test - y_pred) ** 2))
                 rmse = float(np.sqrt(mse))
+                mae = float(mean_absolute_error(y_test, y_pred))
                 
                 metrics = {
                     "model_type": "RandomForestRegressor",
@@ -290,7 +321,29 @@ class TrainSimpleModelTool(BaseTool):
                     "train_r2": round(float(train_score), 4),
                     "test_r2": round(float(test_score), 4),
                     "rmse": round(rmse, 4),
+                    "mae": round(mae, 4),
                 }
+            
+            # Common training metadata
+            metrics["trained_at"] = datetime.now().isoformat()
+            metrics["training_duration_seconds"] = training_duration
+            metrics["random_state"] = 42
+            metrics["test_size"] = test_size
+            metrics["train_samples"] = len(X_train)
+            metrics["test_samples"] = len(X_test)
+            metrics["total_samples"] = len(X_encoded)
+            metrics["feature_count"] = len(X_encoded.columns)
+            
+            # Hyperparameters
+            metrics["hyperparameters"] = {
+                "n_estimators": 100,
+                "random_state": 42,
+                "n_jobs": -1,
+                "criterion": "gini" if problem_type == "classification" else "squared_error",
+                "max_depth": None,
+                "min_samples_split": 2,
+                "min_samples_leaf": 1,
+            }
             
             # Feature importance
             feature_importance = dict(zip(X_encoded.columns, model.feature_importances_))

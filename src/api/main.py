@@ -378,12 +378,28 @@ async def get_model_stats():
                 # Classification metrics
                 "train_accuracy": metrics.get("train_accuracy"),
                 "test_accuracy": metrics.get("test_accuracy"),
+                "precision": metrics.get("precision"),
+                "recall": metrics.get("recall"),
+                "f1_score": metrics.get("f1_score"),
                 "n_classes": metrics.get("n_classes"),
+                "confusion_matrix": metrics.get("confusion_matrix"),
                 # Regression metrics
                 "train_r2": metrics.get("train_r2"),
                 "test_r2": metrics.get("test_r2"),
                 "rmse": metrics.get("rmse"),
+                "mae": metrics.get("mae"),
             },
+            # Training info
+            "trained_at": metrics.get("trained_at"),
+            "training_duration_seconds": metrics.get("training_duration_seconds"),
+            "random_state": metrics.get("random_state"),
+            "test_size": metrics.get("test_size"),
+            "train_samples": metrics.get("train_samples"),
+            "test_samples": metrics.get("test_samples"),
+            "total_samples": metrics.get("total_samples"),
+            # Hyperparameters
+            "hyperparameters": metrics.get("hyperparameters", {}),
+            # Feature importance
             "top_features": metrics.get("top_features", {}),
             "file_size_mb": file_size_mb,
             "model_path": "output/models/trained_model.pkl"
