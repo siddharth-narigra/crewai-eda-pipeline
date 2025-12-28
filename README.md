@@ -1,4 +1,4 @@
-#  plainable Multi-Agent System for Automated Data Analysis
+#  Explainable Multi-Agent System for Automated Data Analysis
 
 ![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
@@ -271,7 +271,6 @@ flowchart TB
 - **Interactive Report**: Displayed directly in the UI.
 - **Files**:
   - `report.md`: Comprehensive Markdown report.
-  - `report.html`: Styled HTML report for business users.
   - `cleaned_data.csv`: The processed dataset.
   - `charts/*.png`: Generated visualizations.
   - `models/model.pkl`: Trained ML model (if applicable).
