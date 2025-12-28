@@ -132,11 +132,11 @@ flowchart TB
         OutputDir["output/"]
         ChartsDir["output/charts/"]
         ModelsDir["output/models/"]
-        ReportMD["report.md"]
-        ReportHTML["report.html"]
+        ReportMD["report.md + Model Summary"]
+        ReportHTML["report.html + Model Summary"]
         CleanedCSV["cleaned_data.csv"]
         PNGCharts["*.png Charts"]
-        ModelPKL["model.pkl"]
+        ModelPKL["trained_model.pkl"]
     end
 
     User -->|"Upload CSV/Excel"| FileUploader
@@ -182,8 +182,10 @@ flowchart TB
     DataStore --> Changelog
     DataStore --> Metadata
 
-    VizTools --> ChartsDir
+    VizTools -->ChartsDir
     MLTools --> ModelsDir
+    MLTools -->|"Append Model Summary"| ReportMD
+    MLTools -->|"Append Model Summary"| ReportHTML
     Reporter --> ReportMD
     Reporter --> ReportHTML
     DataTools --> CleanedCSV
@@ -201,18 +203,21 @@ flowchart TB
   - `Cleaner`: Handles missing values and outlier detection using Pandas.
   - `Statistician`: Performs statistical analysis (correlations, normality tests, pattern detection).
   - `Visualizer`: Generates charts using Matplotlib/Seaborn (distributions, heatmaps, box plots).
-  - `Model Recommender`: Suggests and trains ML models using Scikit-learn.
+  - `Model Recommender`: Suggests and trains ML models using Scikit-learn, capturing detailed training metadata.
   - `XAI Agent`: Computes SHAP values and LIME explanations for model interpretability.
   - `Reporter`: Compiles all findings into structured Markdown/HTML reports.
-- **Frontend UI**: A Next.js application that provides a real-time dashboard for monitoring progress and viewing interactive reports.
+- **Model Summary Integration**: After training, detailed model metrics are automatically appended to the report.
+- **Frontend UI**: A Next.js application that provides a real-time dashboard for monitoring progress, viewing interactive reports, and exploring model training details (confusion matrix, hyperparameters, feature importance).
 
 ## Key Features
 
-- **Multi-Agent Collaboration**: specialized roles ensure depth in every aspect of analysis (cleaning, stats, viz).
+- **Multi-Agent Collaboration**: Specialized roles ensure depth in every aspect of analysis (cleaning, stats, viz).
 - **Explainable AI (XAI)**: Integrated SHAP and LIME for transparent model interpretation.
 - **Automated Data Cleaning**: Intelligent handling of missing values and outliers with audit logs.
 - **Interactive Dashboard**: Modern UI for easy upload, monitoring, and report consumption.
 - **Dual-Format Reporting**: Generates both Markdown (for devs) and HTML (for business) reports.
+- **Enhanced Model Viewer**: Displays training configuration, data split, performance metrics, confusion matrix with interpretation, and hyperparameters.
+- **Unified Model Report**: Model training summary is automatically appended to the EDA report after training.
 
 ## Screenshots
 
@@ -256,10 +261,11 @@ flowchart TB
 3. **Cleaning**: The `Cleaner` agent executes transformations to fix identified issues.
 4. **Statistical Analysis**: The `Statistician` agent computes descriptive stats, correlations, and pattern detection.
 5. **Visualization**: The `Visualizer` agent generates distribution plots, heatmaps, and box plots.
-6. **Model Training**: The `Model Recommender` agent suggests and trains an appropriate ML model.
+6. **Model Training**: The `Model Recommender` agent suggests and trains an appropriate ML model, capturing detailed metrics (accuracy, precision, recall, F1, confusion matrix).
 7. **Explanation**: The `XAI Agent` computes SHAP/LIME explanations for model interpretability.
 8. **Reporting**: The `Reporter` agent compiles all artifacts into a cohesive narrative.
-9. **Review**: User views the final report and charts on the Dashboard.
+9. **Model Summary**: Training results are automatically appended to the report (training config, data split, performance metrics, hyperparameters).
+10. **Review**: User views the final report, charts, and model details on the Dashboard.
 
 ## Input Format
 
@@ -268,12 +274,13 @@ flowchart TB
 
 ## Output Format
 
-- **Interactive Report**: Displayed directly in the UI.
+- **Interactive Report**: Displayed directly in the UI with live model metrics.
 - **Files**:
-  - `report.md`: Comprehensive Markdown report.
+  - `report.md`: Comprehensive Markdown report (includes Model Training Summary section).
+  - `report.html`: HTML-formatted report for business stakeholders.
   - `cleaned_data.csv`: The processed dataset.
-  - `charts/*.png`: Generated visualizations.
-  - `models/model.pkl`: Trained ML model (if applicable).
+  - `charts/*.png`: Generated visualizations (distributions, correlations, SHAP, LIME).
+  - `models/trained_model.pkl`: Trained ML model with encoders and metadata.
 
 ## Installation Instructions
 

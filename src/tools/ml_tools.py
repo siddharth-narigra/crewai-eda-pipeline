@@ -374,7 +374,156 @@ class TrainSimpleModelTool(BaseTool):
             metrics["model_saved"] = "output/models/trained_model.pkl"
             metrics["status"] = "success"
             
+            # Append Model Training Summary to report
+            self._append_model_summary_to_report(metrics, problem_type)
+            
             return json.dumps(metrics, indent=2)
             
         except Exception as e:
             return f"Error training model: {str(e)}"
+    
+    def _append_model_summary_to_report(self, metrics: dict, problem_type: str):
+        """Append Model Training Summary section to report.md and report.html"""
+        try:
+            report_path = "output/report.md"
+            html_path = "output/report.html"
+            
+            if not os.path.exists(report_path):
+                return  # Report doesn't exist yet
+            
+            # Generate markdown section
+            md_section = self._generate_model_summary_markdown(metrics, problem_type)
+            
+            # Append to markdown report
+            with open(report_path, "a", encoding="utf-8") as f:
+                f.write("\n\n" + md_section)
+            
+            # Append to HTML report if it exists
+            if os.path.exists(html_path):
+                html_section = self._markdown_to_html(md_section)
+                with open(html_path, "r", encoding="utf-8") as f:
+                    html_content = f.read()
+                
+                # Insert before closing body tag
+                if "</body>" in html_content:
+                    html_content = html_content.replace("</body>", html_section + "\n</body>")
+                else:
+                    html_content += html_section
+                
+                with open(html_path, "w", encoding="utf-8") as f:
+                    f.write(html_content)
+                    
+        except Exception as e:
+            print(f"Warning: Could not append model summary to report: {e}")
+    
+    def _generate_model_summary_markdown(self, metrics: dict, problem_type: str) -> str:
+        """Generate markdown content for Model Training Summary section"""
+        train_pct = round(metrics.get("train_samples", 0) / max(metrics.get("total_samples", 1), 1) * 100, 1)
+        test_pct = round(metrics.get("test_samples", 0) / max(metrics.get("total_samples", 1), 1) * 100, 1)
+        
+        md = f"""## 9. Model Training Summary
+
+### Training Configuration
+- **Model Type**: {metrics.get("model_type", "N/A")}
+- **Trained At**: {metrics.get("trained_at", "N/A")}
+- **Training Duration**: {metrics.get("training_duration_seconds", "N/A")} seconds
+- **Test Size**: {int(metrics.get("test_size", 0.2) * 100)}%
+- **Random State**: {metrics.get("random_state", 42)}
+
+### Data Split
+| Set | Samples | Percentage |
+|-----|---------|------------|
+| Training | {metrics.get("train_samples", "N/A"):,} | {train_pct}% |
+| Testing | {metrics.get("test_samples", "N/A"):,} | {test_pct}% |
+| **Total** | **{metrics.get("total_samples", "N/A"):,}** | **100%** |
+
+### Performance Metrics
+"""
+        
+        if problem_type == "classification":
+            md += f"""- **Test Accuracy**: {metrics.get("test_accuracy", 0) * 100:.2f}%
+- **Train Accuracy**: {metrics.get("train_accuracy", 0) * 100:.2f}%
+- **Precision**: {metrics.get("precision", 0) * 100:.2f}%
+- **Recall**: {metrics.get("recall", 0) * 100:.2f}%
+- **F1-Score**: {metrics.get("f1_score", 0) * 100:.2f}%
+- **Number of Classes**: {metrics.get("n_classes", "N/A")}
+"""
+            # Add confusion matrix if available
+            cm = metrics.get("confusion_matrix")
+            if cm and len(cm) == 2:
+                md += f"""
+### Confusion Matrix
+|  | Predicted 0 | Predicted 1 |
+|--|-------------|-------------|
+| **Actual 0** | {cm[0][0]} | {cm[0][1]} |
+| **Actual 1** | {cm[1][0]} | {cm[1][1]} |
+"""
+        else:
+            md += f"""- **Test R²**: {metrics.get("test_r2", 0):.4f}
+- **Train R²**: {metrics.get("train_r2", 0):.4f}
+- **RMSE**: {metrics.get("rmse", 0):.4f}
+- **MAE**: {metrics.get("mae", 0):.4f}
+"""
+        
+        # Add hyperparameters
+        hyperparams = metrics.get("hyperparameters", {})
+        if hyperparams:
+            md += "\n### Hyperparameters\n| Parameter | Value |\n|-----------|-------|\n"
+            for key, value in hyperparams.items():
+                md += f"| {key} | {value} |\n"
+        
+        # Add top features
+        top_features = metrics.get("top_features", {})
+        if top_features:
+            md += "\n### Top 5 Features\n"
+            for i, (feature, importance) in enumerate(list(top_features.items())[:5], 1):
+                md += f"{i}. **{feature}**: {importance * 100:.2f}%\n"
+        
+        return md
+    
+    def _markdown_to_html(self, md_content: str) -> str:
+        """Simple markdown to HTML conversion for the model summary section"""
+        import re
+        
+        html = md_content
+        
+        # Convert headers
+        html = re.sub(r'^### (.+)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
+        html = re.sub(r'^## (.+)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
+        
+        # Convert bold
+        html = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', html)
+        
+        # Convert lists
+        html = re.sub(r'^- (.+)$', r'<li>\1</li>', html, flags=re.MULTILINE)
+        html = re.sub(r'^(\d+)\. (.+)$', r'<li>\2</li>', html, flags=re.MULTILINE)
+        
+        # Wrap consecutive li elements in ul
+        html = re.sub(r'(<li>.*?</li>\n)+', lambda m: f'<ul>{m.group(0)}</ul>', html, flags=re.DOTALL)
+        
+        # Convert tables (simplified)
+        lines = html.split('\n')
+        in_table = False
+        result = []
+        for line in lines:
+            if '|' in line and not line.strip().startswith('|--'):
+                if not in_table:
+                    result.append('<table class="model-summary-table" style="border-collapse: collapse; margin: 1rem 0;">')
+                    in_table = True
+                cells = [c.strip() for c in line.split('|')[1:-1]]
+                row = '<tr>' + ''.join(f'<td style="border: 1px solid #000; padding: 0.5rem;">{c}</td>' for c in cells) + '</tr>'
+                result.append(row)
+            elif in_table and '|--' not in line:
+                result.append('</table>')
+                in_table = False
+                result.append(line)
+            elif '|--' not in line:
+                result.append(line)
+        
+        if in_table:
+            result.append('</table>')
+        
+        html = '\n'.join(result)
+        html = f'<div class="model-summary-section" style="margin-top: 2rem; padding: 1rem; border: 3px solid #000;">\n{html}\n</div>'
+        
+        return html
