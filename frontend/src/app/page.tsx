@@ -102,175 +102,327 @@ export default function Home() {
         isAnalyzing={isAnalyzing}
       />
 
-      <main className="container-brutal py-8 flex-1">
+      <main className="container-brutal py-8 flex-1 pb-24 lg:pb-8">
         {/* ═══════════════════════════════════════════════════════════
             UPLOAD TAB
             ═══════════════════════════════════════════════════════════ */}
         {activeTab === 'upload' && (
-          <div>
-            {/* Split Hero Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-16">
-              {/* Left Column: Typography */}
-              <div>
-                <h1 className="text-hero mb-8">
-                  ANALYZE<br />
-                  YOUR<br />
-                  <span className="inline-block bg-[#FFFF00] border-[5px] border-black px-4 pb-1 mt-4 shadow-[8px_8px_0px_0px_#000000]">
-                    DATA
-                  </span>
+          <>
+            {/* DESKTOP LAYOUT - Only shows on large screens (≥1024px) */}
+            <div className="hidden lg:block">
+              {/* Split Hero Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start mb-16">
+                {/* Left Column: Typography */}
+                <div>
+                  <h1 className="text-hero mb-8">
+                    ANALYZE<br />
+                    YOUR<br />
+                    <span className="inline-block bg-[#FFFF00] border-[5px] border-black px-4 pb-1 mt-4 shadow-[8px_8px_0px_0px_#000000]">
+                      DATA
+                    </span>
+                  </h1>
+                  <p className="text-body text-lg border-l-[6px] border-black pl-6 py-2 max-w-md">
+                    Upload a dataset and let AI agents perform comprehensive exploratory
+                    data analysis with full transparency and explainability.
+                  </p>
+                </div>
+
+                {/* Right Column: Uploader */}
+                <div className="w-full pt-4">
+                  <FileUploader onUploadSuccess={handleUploadSuccess} />
+                </div>
+              </div>
+
+              {!uploadData && (
+                <div className="mt-0 border-t-[6px] border-black pt-16">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="h-4 w-4 bg-black"></div>
+                    <h2 className="text-h2">SYSTEM CAPABILITIES</h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Card 1 */}
+                    <div className="border-[3px] border-black p-6 bg-white hover:translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000000] transition-all duration-200">
+                      <div className="mb-4 font-black text-4xl text-[#E0E0E0] select-none">01</div>
+                      <h3 className="text-xl font-black mb-3">MULTI-AGENT SWARM</h3>
+                      <p className="text-sm font-mono leading-relaxed">
+                        5 specialized AI agents (Profiler, Cleaner, Statistician) work in parallel to audit and process your data.
+                      </p>
+                    </div>
+
+                    {/* Card 2 */}
+                    <div className="border-[3px] border-black p-6 bg-white hover:translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000000] transition-all duration-200">
+                      <div className="mb-4 font-black text-4xl text-[#E0E0E0] select-none">02</div>
+                      <h3 className="text-xl font-black mb-3">EXPLAINABLE AI</h3>
+                      <p className="text-sm font-mono leading-relaxed">
+                        Integrated SHAP & LIME algorithms ensure every insight is transparent, traceable, and free of black boxes.
+                      </p>
+                    </div>
+
+                    {/* Card 3 */}
+                    <div className="border-[3px] border-black p-6 bg-white hover:translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000000] transition-all duration-200">
+                      <div className="mb-4 font-black text-4xl text-[#E0E0E0] select-none">03</div>
+                      <h3 className="text-xl font-black mb-3">AUTO REPORTING</h3>
+                      <p className="text-sm font-mono leading-relaxed">
+                        Generates comprehensive markdown reports with statistical validation and publication-ready charts instantly.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Data Preview - Desktop */}
+              {uploadData && (
+                <div className="mt-8">
+                  <hr className="divider-brutal-thick" />
+
+                  <h2 className="text-h2 mb-6">DATA LOADED</h2>
+
+                  {/* Stats Grid */}
+                  <div className="grid-brutal grid-brutal-4 mb-6">
+                    <StatCard value={uploadData.rows} label="ROWS" />
+                    <StatCard value={uploadData.columns} label="COLUMNS" variant="filled" />
+                    <StatCard value={`${uploadData.memory_mb}MB`} label="SIZE" />
+                    <StatCard
+                      value={uploadData.filename.split('.').pop()?.toUpperCase() || 'FILE'}
+                      label="FORMAT"
+                      variant="accent"
+                    />
+                  </div>
+
+                  {/* Column Table */}
+                  <div
+                    className="border-[4px] border-black bg-white p-6 mb-6"
+                    style={{ boxShadow: '8px 8px 0px 0px #000000' }}
+                  >
+                    <h3 className="text-xl font-black uppercase mb-4 pb-2 border-b-[4px] border-black">COLUMNS</h3>
+                    <div className="border-[3px] border-black overflow-hidden">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="bg-black text-white">
+                            <th className="p-3 text-left font-bold uppercase text-sm w-16">#</th>
+                            <th className="p-3 text-left font-bold uppercase text-sm">NAME</th>
+                            <th className="p-3 text-left font-bold uppercase text-sm w-32">TYPE</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(showAllColumns ? uploadData.column_names : uploadData.column_names.slice(0, 10)).map((col, i) => (
+                            <tr
+                              key={col}
+                              className={`border-b-2 border-black ${i % 2 === 0 ? 'bg-white' : 'bg-[#F5F5F5]'} hover:bg-[#FFFF00] transition-colors`}
+                            >
+                              <td className="p-3 font-mono font-bold">{i + 1}</td>
+                              <td className="p-3 font-mono font-semibold">{col}</td>
+                              <td className="p-3">
+                                <span
+                                  className="inline-block px-3 py-1 text-xs font-bold uppercase border-[2px] border-black bg-white"
+                                  style={{ boxShadow: '2px 2px 0px 0px #000000' }}
+                                >
+                                  {uploadData.dtypes[col]}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                          {uploadData.column_names.length > 10 && (
+                            <tr
+                              onClick={() => setShowAllColumns(!showAllColumns)}
+                              className="cursor-pointer bg-[#F0F0F0] hover:bg-[#FFFF00] transition-colors border-t-[3px] border-black"
+                            >
+                              <td colSpan={3} className="p-4 text-center font-bold uppercase text-sm">
+                                {showAllColumns ? (
+                                  <span>▲ SHOW LESS</span>
+                                ) : (
+                                  <span>▼ + {uploadData.column_names.length - 10} MORE COLUMNS</span>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Start Button */}
+                  <button
+                    onClick={handleStartAnalysis}
+                    disabled={isAnalyzing}
+                    className="btn-brutal btn-brutal-action text-lg px-12 py-4"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <span className="spinner-brutal" /> ANALYZING...
+                      </>
+                    ) : (
+                      <>■ START ANALYSIS</>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* Progress - Desktop */}
+              {isAnalyzing && edaStatus && (
+                <div className="mt-8">
+                  <ProgressBar
+                    progress={edaStatus.progress}
+                    status={edaStatus.message}
+                    stages={edaStatus.stages}
+                    activityLog={edaStatus.activity_log}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* MOBILE LAYOUT - Only shows on small screens (<1024px) */}
+            <div className="block lg:hidden">
+              {/* Mobile Hero - Compact */}
+              <div className="mb-6">
+                <h1 className="text-4xl font-black leading-tight mb-4">
+                  ANALYZE YOUR{' '}
+                  <span className="inline-block bg-[#FFFF00] border-[3px] border-black px-2 py-1">DATA</span>
                 </h1>
-                <p className="text-body text-lg border-l-[6px] border-black pl-6 py-2 max-w-md">
-                  Upload a dataset and let AI agents perform comprehensive exploratory
-                  data analysis with full transparency and explainability.
+                <p className="text-sm font-mono pl-3 border-l-[3px] border-black">
+                  AI-powered data analysis with full transparency
                 </p>
               </div>
 
-              {/* Right Column: Uploader */}
-              <div className="w-full pt-4">
+              {/* Mobile Uploader - Compact */}
+              <div className="mb-6">
                 <FileUploader onUploadSuccess={handleUploadSuccess} />
-
-                {/* Visual cue pointing to uploader if needed, but the layout is clear enough */}
               </div>
-            </div>
 
-            {!uploadData && (
-              <div className="mt-0 border-t-[6px] border-black pt-16">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="h-4 w-4 bg-black"></div>
-                  <h2 className="text-h2">SYSTEM CAPABILITIES</h2>
+              {/* Mobile Capabilities - Condensed */}
+              {!uploadData && (
+                <div className="border-t-[3px] border-black pt-6">
+                  <h2 className="text-xl font-black mb-4 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-black"></span>
+                    FEATURES
+                  </h2>
+
+                  <div className="space-y-3">
+                    <div className="border-[2px] border-black p-3 bg-white">
+                      <div className="flex items-start gap-3">
+                        <span className="font-black text-lg text-gray-300 shrink-0">01</span>
+                        <div>
+                          <h3 className="text-sm font-black mb-1">MULTI-AGENT SWARM</h3>
+                          <p className="text-xs font-mono leading-relaxed">
+                            5 AI agents work in parallel to process your data
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-[2px] border-black p-3 bg-white">
+                      <div className="flex items-start gap-3">
+                        <span className="font-black text-lg text-gray-300 shrink-0">02</span>
+                        <div>
+                          <h3 className="text-sm font-black mb-1">EXPLAINABLE AI</h3>
+                          <p className="text-xs font-mono leading-relaxed">
+                            SHAP & LIME ensure transparent insights
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-[2px] border-black p-3 bg-white">
+                      <div className="flex items-start gap-3">
+                        <span className="font-black text-lg text-gray-300 shrink-0">03</span>
+                        <div>
+                          <h3 className="text-sm font-black mb-1">AUTO REPORTING</h3>
+                          <p className="text-xs font-mono leading-relaxed">
+                            Instant markdown reports with charts
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Card 1 */}
-                  <div className="border-[3px] border-black p-6 bg-white hover:translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000000] transition-all duration-200">
-                    <div className="mb-4 font-black text-4xl text-[#E0E0E0] select-none">01</div>
-                    <h3 className="text-xl font-black mb-3">MULTI-AGENT SWARM</h3>
-                    <p className="text-sm font-mono leading-relaxed">
-                      5 specialized AI agents (Profiler, Cleaner, Statistician) work in parallel to audit and process your data.
-                    </p>
+              {/* Mobile Data Preview */}
+              {uploadData && (
+                <div>
+                  <div className="border-t-[3px] border-black pt-6 mb-4">
+                    <h2 className="text-xl font-black mb-4">DATA LOADED</h2>
                   </div>
 
-                  {/* Card 2 */}
-                  <div className="border-[3px] border-black p-6 bg-white hover:translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000000] transition-all duration-200">
-                    <div className="mb-4 font-black text-4xl text-[#E0E0E0] select-none">02</div>
-                    <h3 className="text-xl font-black mb-3">EXPLAINABLE AI</h3>
-                    <p className="text-sm font-mono leading-relaxed">
-                      Integrated SHAP & LIME algorithms ensure every insight is transparent, traceable, and free of black boxes.
-                    </p>
+                  {/* Mobile Stats - 2x2 Grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="border-[2px] border-black p-3 bg-white">
+                      <p className="text-2xl font-black">{uploadData.rows}</p>
+                      <p className="text-xs font-bold uppercase">ROWS</p>
+                    </div>
+                    <div className="border-[2px] border-black p-3 bg-black text-white">
+                      <p className="text-2xl font-black">{uploadData.columns}</p>
+                      <p className="text-xs font-bold uppercase">COLUMNS</p>
+                    </div>
+                    <div className="border-[2px] border-black p-3 bg-white">
+                      <p className="text-2xl font-black">{uploadData.memory_mb}MB</p>
+                      <p className="text-xs font-bold uppercase">SIZE</p>
+                    </div>
+                    <div className="border-[2px] border-black p-3 bg-[#FFFF00]">
+                      <p className="text-2xl font-black">{uploadData.filename.split('.').pop()?.toUpperCase()}</p>
+                      <p className="text-xs font-bold uppercase">FORMAT</p>
+                    </div>
                   </div>
 
-                  {/* Card 3 */}
-                  <div className="border-[3px] border-black p-6 bg-white hover:translate-x-1 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#000000] transition-all duration-200">
-                    <div className="mb-4 font-black text-4xl text-[#E0E0E0] select-none">03</div>
-                    <h3 className="text-xl font-black mb-3">AUTO REPORTING</h3>
-                    <p className="text-sm font-mono leading-relaxed">
-                      Generates comprehensive markdown reports with statistical validation and publication-ready charts instantly.
-                    </p>
+                  {/* Mobile Column List - Simplified */}
+                  <div className="border-[3px] border-black bg-white p-3 mb-4">
+                    <h3 className="text-sm font-black uppercase mb-3 pb-2 border-b-[2px] border-black">
+                      COLUMNS ({uploadData.column_names.length})
+                    </h3>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {(showAllColumns ? uploadData.column_names : uploadData.column_names.slice(0, 5)).map((col, i) => (
+                        <div key={col} className="flex items-center justify-between p-2 border-[1px] border-gray-300 bg-gray-50">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-xs font-bold text-gray-400 shrink-0">{i + 1}</span>
+                            <span className="text-xs font-mono font-semibold truncate">{col}</span>
+                          </div>
+                          <span className="text-xs font-bold uppercase border-[1px] border-black px-2 py-0.5 bg-white ml-2 shrink-0">
+                            {uploadData.dtypes[col]}
+                          </span>
+                        </div>
+                      ))}
+                      {uploadData.column_names.length > 5 && (
+                        <button
+                          onClick={() => setShowAllColumns(!showAllColumns)}
+                          className="w-full p-2 bg-gray-200 border-[2px] border-black text-xs font-bold uppercase hover:bg-[#FFFF00]"
+                        >
+                          {showAllColumns ? '▲ SHOW LESS' : `▼ SHOW ALL ${uploadData.column_names.length} COLUMNS`}
+                        </button>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Mobile Start Button */}
+                  <button
+                    onClick={handleStartAnalysis}
+                    disabled={isAnalyzing}
+                    className="w-full bg-black text-white border-[3px] border-black p-4 font-black uppercase text-sm disabled:opacity-50"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <span className="spinner-brutal" /> ANALYZING...
+                      </>
+                    ) : (
+                      <>■ START ANALYSIS</>
+                    )}
+                  </button>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Data Preview */}
-            {uploadData && (
-              <div className="mt-8">
-                <hr className="divider-brutal-thick" />
-
-                <h2 className="text-h2 mb-6">DATA LOADED</h2>
-
-                {/* Stats Grid */}
-                <div className="grid-brutal grid-brutal-4 mb-6">
-                  <StatCard value={uploadData.rows} label="ROWS" />
-                  <StatCard value={uploadData.columns} label="COLUMNS" variant="filled" />
-                  <StatCard value={`${uploadData.memory_mb}MB`} label="SIZE" />
-                  <StatCard
-                    value={uploadData.filename.split('.').pop()?.toUpperCase() || 'FILE'}
-                    label="FORMAT"
-                    variant="accent"
+              {/* Mobile Progress */}
+              {isAnalyzing && edaStatus && (
+                <div className="mt-6">
+                  <ProgressBar
+                    progress={edaStatus.progress}
+                    status={edaStatus.message}
+                    stages={edaStatus.stages}
+                    activityLog={edaStatus.activity_log}
                   />
                 </div>
-
-                {/* Column Table */}
-                <div
-                  className="border-[4px] border-black bg-white p-6 mb-6"
-                  style={{ boxShadow: '8px 8px 0px 0px #000000' }}
-                >
-                  <h3 className="text-xl font-black uppercase mb-4 pb-2 border-b-[4px] border-black">COLUMNS</h3>
-                  <div className="border-[3px] border-black overflow-hidden">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-black text-white">
-                          <th className="p-3 text-left font-bold uppercase text-sm w-16">#</th>
-                          <th className="p-3 text-left font-bold uppercase text-sm">NAME</th>
-                          <th className="p-3 text-left font-bold uppercase text-sm w-32">TYPE</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(showAllColumns ? uploadData.column_names : uploadData.column_names.slice(0, 10)).map((col, i) => (
-                          <tr
-                            key={col}
-                            className={`border-b-2 border-black ${i % 2 === 0 ? 'bg-white' : 'bg-[#F5F5F5]'} hover:bg-[#FFFF00] transition-colors`}
-                          >
-                            <td className="p-3 font-mono font-bold">{i + 1}</td>
-                            <td className="p-3 font-mono font-semibold">{col}</td>
-                            <td className="p-3">
-                              <span
-                                className="inline-block px-3 py-1 text-xs font-bold uppercase border-[2px] border-black bg-white"
-                                style={{ boxShadow: '2px 2px 0px 0px #000000' }}
-                              >
-                                {uploadData.dtypes[col]}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                        {uploadData.column_names.length > 10 && (
-                          <tr
-                            onClick={() => setShowAllColumns(!showAllColumns)}
-                            className="cursor-pointer bg-[#F0F0F0] hover:bg-[#FFFF00] transition-colors border-t-[3px] border-black"
-                          >
-                            <td colSpan={3} className="p-4 text-center font-bold uppercase text-sm">
-                              {showAllColumns ? (
-                                <span>▲ SHOW LESS</span>
-                              ) : (
-                                <span>▼ + {uploadData.column_names.length - 10} MORE COLUMNS</span>
-                              )}
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Start Button */}
-                <button
-                  onClick={handleStartAnalysis}
-                  disabled={isAnalyzing}
-                  className="btn-brutal btn-brutal-action text-lg px-12 py-4"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <span className="spinner-brutal" /> ANALYZING...
-                    </>
-                  ) : (
-                    <>■ START ANALYSIS</>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* Progress */}
-            {isAnalyzing && edaStatus && (
-              <div className="mt-8">
-                <ProgressBar
-                  progress={edaStatus.progress}
-                  status={edaStatus.message}
-                  stages={edaStatus.stages}
-                  activityLog={edaStatus.activity_log}
-                />
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </>
         )}
 
         {/* ═══════════════════════════════════════════════════════════
@@ -292,17 +444,33 @@ export default function Home() {
             </div>
 
             {charts.length === 0 ? (
-              <div className="card-brutal-edge">
-                <div className="flex items-stretch">
-                  <div className="aspect-square w-56 bg-black flex items-center justify-center shrink-0">
-                    <img src="/dashboard.svg" alt="" className="w-32 h-32" />
-                  </div>
-                  <div className="flex-1 p-8 flex flex-col justify-center border-l-0">
-                    <p className="text-xl font-black uppercase tracking-tight mb-1">NO DATA AVAILABLE</p>
-                    <p className="text-sm text-gray-500 tracking-wide">Upload a dataset and run the EDA analysis to see your dashboard.</p>
+              <>
+                {/* Desktop/Laptop Layout */}
+                <div className="card-brutal-edge hidden lg:block">
+                  <div className="flex items-stretch">
+                    <div className="aspect-square w-56 bg-black flex items-center justify-center shrink-0">
+                      <img src="/dashboard.svg" alt="" className="w-32 h-32" />
+                    </div>
+                    <div className="flex-1 p-8 flex flex-col justify-center border-l-0">
+                      <p className="text-xl font-black uppercase tracking-tight mb-1">NO DATA AVAILABLE</p>
+                      <p className="text-sm text-gray-500 tracking-wide">Upload a dataset and run the EDA analysis to see your dashboard.</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                {/* Mobile Layout */}
+                <div className="card-brutal-edge block lg:hidden">
+                  <div className="flex flex-col items-stretch">
+                    <div className="w-full h-48 bg-black flex items-center justify-center">
+                      <img src="/dashboard.svg" alt="" className="w-24 h-24" />
+                    </div>
+                    <div className="p-4 flex flex-col justify-center">
+                      <p className="text-lg font-black uppercase tracking-tight mb-1">NO DATA AVAILABLE</p>
+                      <p className="text-xs text-gray-500 tracking-wide">Upload a dataset and run the EDA analysis to see your dashboard.</p>
+                    </div>
+                  </div>
+                </div>
+              </>
             ) : (
               <>
                 {/* Quick Stats */}
@@ -401,21 +569,39 @@ export default function Home() {
           <div>
             <div className="flex items-center justify-between mb-8">
               <h1 className="text-h1">VISUALIZATIONS</h1>
-              <span className="tag-brutal">{charts.length} CHARTS</span>
+              {charts.length > 0 && (
+                <span className="tag-brutal">{charts.length} CHARTS</span>
+              )}
             </div>
 
             {charts.length === 0 ? (
-              <div className="card-brutal-edge">
-                <div className="flex items-stretch">
-                  <div className="aspect-square w-56 bg-black flex items-center justify-center shrink-0">
-                    <img src="/visualization.svg" alt="" className="w-32 h-32" />
-                  </div>
-                  <div className="flex-1 p-8 flex flex-col justify-center">
-                    <p className="text-xl font-black uppercase tracking-tight mb-1">NO CHARTS YET</p>
-                    <p className="text-sm text-gray-500 tracking-wide">Run the EDA analysis first to generate visualizations.</p>
+              <>
+                {/* Desktop/Laptop Layout */}
+                <div className="card-brutal-edge hidden lg:block">
+                  <div className="flex items-stretch">
+                    <div className="aspect-square w-56 bg-black flex items-center justify-center shrink-0">
+                      <img src="/visualization.svg" alt="" className="w-32 h-32" />
+                    </div>
+                    <div className="flex-1 p-8 flex flex-col justify-center">
+                      <p className="text-xl font-black uppercase tracking-tight mb-1">NO CHARTS YET</p>
+                      <p className="text-sm text-gray-500 tracking-wide">Run the EDA analysis first to generate visualizations.</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                {/* Mobile Layout */}
+                <div className="card-brutal-edge block lg:hidden">
+                  <div className="flex flex-col items-stretch">
+                    <div className="w-full h-48 bg-black flex items-center justify-center">
+                      <img src="/visualization.svg" alt="" className="w-24 h-24" />
+                    </div>
+                    <div className="p-4 flex flex-col justify-center">
+                      <p className="text-lg font-black uppercase tracking-tight mb-1">NO CHARTS YET</p>
+                      <p className="text-xs text-gray-500 tracking-wide">Run the EDA analysis first to generate visualizations.</p>
+                    </div>
+                  </div>
+                </div>
+              </>
             ) : (
               <ChartGallery
                 charts={charts}
@@ -512,17 +698,33 @@ export default function Home() {
                 </div>
               </div>
             ) : (
-              <div className="card-brutal-edge">
-                <div className="flex items-stretch">
-                  <div className="aspect-square w-56 bg-black flex items-center justify-center shrink-0">
-                    <img src="/report.svg" alt="" className="w-32 h-32" />
-                  </div>
-                  <div className="flex-1 p-8 flex flex-col justify-center">
-                    <p className="text-xl font-black uppercase tracking-tight mb-1">NO REPORT YET</p>
-                    <p className="text-sm text-gray-500 tracking-wide">Run the EDA analysis first to generate a comprehensive report.</p>
+              <>
+                {/* Desktop/Laptop Layout */}
+                <div className="card-brutal-edge hidden lg:block">
+                  <div className="flex items-stretch">
+                    <div className="aspect-square w-56 bg-black flex items-center justify-center shrink-0">
+                      <img src="/report.svg" alt="" className="w-32 h-32" />
+                    </div>
+                    <div className="flex-1 p-8 flex flex-col justify-center">
+                      <p className="text-xl font-black uppercase tracking-tight mb-1">NO REPORT YET</p>
+                      <p className="text-sm text-gray-500 tracking-wide">Run the EDA analysis first to generate a comprehensive report.</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                {/* Mobile Layout */}
+                <div className="card-brutal-edge block lg:hidden">
+                  <div className="flex flex-col items-stretch">
+                    <div className="w-full h-48 bg-black flex items-center justify-center">
+                      <img src="/report.svg" alt="" className="w-24 h-24" />
+                    </div>
+                    <div className="p-4 flex flex-col justify-center">
+                      <p className="text-lg font-black uppercase tracking-tight mb-1">NO REPORT YET</p>
+                      <p className="text-xs text-gray-500 tracking-wide">Run the EDA analysis first to generate a comprehensive report.</p>
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         )}

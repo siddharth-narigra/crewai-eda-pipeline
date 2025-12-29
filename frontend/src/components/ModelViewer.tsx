@@ -68,7 +68,9 @@ export default function ModelViewer({ modelStats, apiBaseUrl, charts }: ModelVie
         return (
             <div>
                 <h1 className="text-h1 mb-8">TRAINED MODEL</h1>
-                <div className="card-brutal-edge">
+
+                {/* Desktop/Laptop Layout */}
+                <div className="card-brutal-edge hidden lg:block">
                     <div className="flex items-stretch">
                         <div className="aspect-square w-56 bg-black flex items-center justify-center shrink-0">
                             <img src="/model.svg" alt="" className="w-32 h-32" />
@@ -76,6 +78,19 @@ export default function ModelViewer({ modelStats, apiBaseUrl, charts }: ModelVie
                         <div className="flex-1 p-8 flex flex-col justify-center">
                             <p className="text-xl font-black uppercase tracking-tight mb-1">NO MODEL TRAINED</p>
                             <p className="text-sm text-gray-500 tracking-wide">Run the EDA analysis first to train a machine learning model.</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mobile Layout */}
+                <div className="card-brutal-edge block lg:hidden">
+                    <div className="flex flex-col items-stretch">
+                        <div className="w-full h-48 bg-black flex items-center justify-center">
+                            <img src="/model.svg" alt="" className="w-24 h-24" />
+                        </div>
+                        <div className="p-4 flex flex-col justify-center">
+                            <p className="text-lg font-black uppercase tracking-tight mb-1">NO MODEL TRAINED</p>
+                            <p className="text-xs text-gray-500 tracking-wide">Run the EDA analysis first to train a machine learning model.</p>
                         </div>
                     </div>
                 </div>
