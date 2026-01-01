@@ -12,11 +12,12 @@ flowchart LR
     Output -->|Display| Frontend
     Frontend --> User
     
-    style Frontend fill:#4CAF50,color:#fff
-    style Backend fill:#2196F3,color:#fff
-    style Crew fill:#FF9800,color:#fff
-    style LLM fill:#9C27B0,color:#fff
-    style Output fill:#FFC107
+    style User fill:#000,stroke:#FF0000,stroke-width:4px,color:#fff
+    style Frontend fill:#FF0000,stroke:#000,stroke-width:4px,color:#fff
+    style Backend fill:#FFD700,stroke:#000,stroke-width:4px,color:#000
+    style Crew fill:#00CED1,stroke:#000,stroke-width:4px,color:#000
+    style LLM fill:#FF1493,stroke:#000,stroke-width:4px,color:#fff
+    style Output fill:#00FF00,stroke:#000,stroke-width:4px,color:#000
 ```
 
 **Key Points:**
@@ -41,13 +42,15 @@ flowchart TD
     Agent6 --> Agent7[7. Reporter<br/>Generate Report]
     Agent7 --> End([Complete Analysis])
     
-    style Agent1 fill:#e3f2fd
-    style Agent2 fill:#e8f5e9
-    style Agent3 fill:#fff3e0
-    style Agent4 fill:#fce4ec
-    style Agent5 fill:#f3e5f5
-    style Agent6 fill:#e0f2f1
-    style Agent7 fill:#fff9c4
+    style Start fill:#000,stroke:#FF0000,stroke-width:4px,color:#fff
+    style Agent1 fill:#FF0000,stroke:#000,stroke-width:4px,color:#fff
+    style Agent2 fill:#FFD700,stroke:#000,stroke-width:4px,color:#000
+    style Agent3 fill:#00CED1,stroke:#000,stroke-width:4px,color:#000
+    style Agent4 fill:#FF1493,stroke:#000,stroke-width:4px,color:#fff
+    style Agent5 fill:#00FF00,stroke:#000,stroke-width:4px,color:#000
+    style Agent6 fill:#FF6600,stroke:#000,stroke-width:4px,color:#fff
+    style Agent7 fill:#9933FF,stroke:#000,stroke-width:4px,color:#fff
+    style End fill:#000,stroke:#00FF00,stroke-width:4px,color:#fff
 ```
 
 **Key Points:**
@@ -87,9 +90,14 @@ flowchart LR
     Train --> Charts
     Train --> Model
     
-    style Input fill:#e3f2fd
-    style Processing fill:#fff3e0
-    style Output fill:#e8f5e9
+    style CSV fill:#FF0000,stroke:#000,stroke-width:4px,color:#fff
+    style Profile fill:#FFD700,stroke:#000,stroke-width:4px,color:#000
+    style Clean fill:#00CED1,stroke:#000,stroke-width:4px,color:#000
+    style Analyze fill:#FF1493,stroke:#000,stroke-width:4px,color:#fff
+    style Train fill:#00FF00,stroke:#000,stroke-width:4px,color:#000
+    style Report fill:#FF6600,stroke:#000,stroke-width:4px,color:#fff
+    style Charts fill:#9933FF,stroke:#000,stroke-width:4px,color:#fff
+    style Model fill:#FFD700,stroke:#000,stroke-width:4px,color:#000
 ```
 
 **Key Points:**
@@ -114,11 +122,13 @@ flowchart TD
     Plot1 --> Report[Added to<br/>Final Report]
     Plot2 --> Report
     
-    style Model fill:#2196F3,color:#fff
-    style XAI fill:#FF9800,color:#fff
-    style SHAP fill:#4CAF50,color:#fff
-    style LIME fill:#9C27B0,color:#fff
-    style Report fill:#FFC107
+    style Model fill:#FF0000,stroke:#000,stroke-width:4px,color:#fff
+    style XAI fill:#000,stroke:#FFD700,stroke-width:4px,color:#FFD700
+    style SHAP fill:#00CED1,stroke:#000,stroke-width:4px,color:#000
+    style LIME fill:#FF1493,stroke:#000,stroke-width:4px,color:#fff
+    style Plot1 fill:#00FF00,stroke:#000,stroke-width:4px,color:#000
+    style Plot2 fill:#FF6600,stroke:#000,stroke-width:4px,color:#fff
+    style Report fill:#9933FF,stroke:#000,stroke-width:4px,color:#fff
 ```
 
 **Key Points:**
@@ -161,10 +171,17 @@ flowchart TB
     Frontend -.-> Deploy
     Backend -.-> Deploy
     
-    style Frontend fill:#61dafb,color:#000
-    style Backend fill:#009688,color:#fff
-    style ML fill:#ff6f00,color:#fff
-    style Deploy fill:#5c6bc0,color:#fff
+    style NextJS fill:#FF0000,stroke:#000,stroke-width:3px,color:#fff
+    style React fill:#00CED1,stroke:#000,stroke-width:3px,color:#000
+    style Tailwind fill:#FFD700,stroke:#000,stroke-width:3px,color:#000
+    style FastAPI fill:#00FF00,stroke:#000,stroke-width:3px,color:#000
+    style CrewAI fill:#FF1493,stroke:#000,stroke-width:3px,color:#fff
+    style Pandas fill:#FF6600,stroke:#000,stroke-width:3px,color:#fff
+    style SKLearn fill:#9933FF,stroke:#000,stroke-width:3px,color:#fff
+    style SHAP fill:#FFD700,stroke:#000,stroke-width:3px,color:#000
+    style LIME fill:#00CED1,stroke:#000,stroke-width:3px,color:#000
+    style Vercel fill:#000,stroke:#FF0000,stroke-width:3px,color:#fff
+    style Render fill:#FF0000,stroke:#000,stroke-width:3px,color:#fff
 ```
 
 **Key Points:**
