@@ -8,13 +8,35 @@
 
 **EMAS-ADA** transforms raw datasets into comprehensive, insightful reports with explainable visualizations using a team of specialized AI agents.
 
-## Problem Statement
+## Why this project exists (Evaluation-first framing)
 
-Data analysis is often a bottleneck: it is time-consuming, prone to human bias, and requires specialized coding skills (Python/R). Business users often rely on data scientists for basic insights, creating delays. Furthermore, "black box" automated tools often lack transparency, making it hard to trust their conclusions.
+Modern AI systems fail silently.
 
-## Solution Overview
+Small changes in prompts, models, preprocessing, or data distributions can cause:
+- subtle quality regressions
+- inconsistent outputs across runs
+- explanations that no longer match behavior
+- decisions that are difficult to audit or trust
 
-This system automates the Exploratory Data Analysis (EDA) pipeline using a Multi-Agent System. It ingests CSV/Excel files, orchestrates specialized agents to profile, clean, analyze, and visualize the data, and delivers a fully explainable report via a modern web interface. It integrates XAI (SHAP/LIME) to ensure every insight is transparent and trustworthy.
+This project was built to address that problem.
+
+**EMAS-ADA is not a dashboard-first analytics tool — it is an evaluation and decision-support pipeline.**
+Its primary goal is to turn raw, messy inputs into **reproducible signals** that help teams answer:
+
+- *What changed?*
+- *Why did it change?*
+- *Can we trust this output?*
+- *Would we catch this regression again if it happened tomorrow?*
+
+To do this, the system enforces:
+- **Deterministic, ordered execution** (no ad-hoc notebooks)
+- **Explicit failure surfaces** at each stage of the pipeline
+- **Auditable transformations** with before/after comparisons
+- **Explainability as a first-class output**, not an afterthought
+
+While the implementation uses an EDA workflow as the substrate, the design principles map directly to
+**AI evaluation infrastructure** — where correctness, traceability, and regression detection matter more than speed or visual polish.
+
 
 ## Architecture Diagram
 
