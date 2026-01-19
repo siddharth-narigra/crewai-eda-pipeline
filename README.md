@@ -8,8 +8,7 @@
 
 **EMAS-ADA** transforms raw datasets into comprehensive, insightful reports with explainable visualizations using a team of specialized AI agents.
 
-## Why this project exists (Evaluation-first framing)
-
+## Why this project exists
 Modern AI systems fail silently.
 
 Small changes in prompts, models, preprocessing, or data distributions can cause:
